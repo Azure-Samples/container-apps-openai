@@ -26,10 +26,10 @@ urlFragment: container-apps-openai
 
 In this sample, I demonstrate how to quickly build chat applications using [Python](https://www.python.org/) and leveraging powerful technologies such as [OpenAI ChatGPT models](https://platform.openai.com/docs/guides/gpt), [Embedding models](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#embeddings-models), [LangChain](https://python.langchain.com/docs/get_started/introduction.html) framework, [ChromaDB](https://docs.trychroma.com/) vector database, and [Chainlit](https://docs.chainlit.io/overview), an open-source Python package that is specifically designed to create user interfaces (UIs) for AI applications. These applications are hosted on [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview), a fully managed environment that enables you to run microservices and containerized applications on a serverless platform.
 
-- **Simple Chat**: this simple chat application utilizes OpenAI's language models for generating completion responses in real-time.
+- **Simple Chat**: This simple chat application utilizes OpenAI's language models to generate real-time completion responses.
 - **Documents QA Chat**: This chat application goes beyond simple conversations. Users can upload up to 10 `.pdf` and `.docx` documents, which are then processed to create vector embeddings. These embeddings are stored in [ChromaDB](https://docs.trychroma.com/) for efficient retrieval. Users can pose questions about the uploaded documents and view the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought),  enabling easy exploration of the reasoning process. The completion message contains links to the text chunks in the documents that were used as a source for the response.
 
-Both applications use a [user-defined managed identity](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) to authenticate and authorize against [Azure OpenAI Service (AOAI)](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) and [Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/) and use [Azure Private Endpoints](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview) to connect privately and securely to these services. The chat UIs are built using [Chainlit](https://docs.chainlit.io/overview), an open-source Python package specifically designed for creating AI applications. Chainlit seamlessly integrates with [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [LlamaIndex](https://gpt-index.readthedocs.io/en/latest/), and [LangFlow](https://github.com/logspace-ai/langflow), making it a powerful tool for developing ChatGPT-like applications with ease.
+Both applications use a [user-defined managed identity](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) to authenticate and authorize against [Azure OpenAI Service (AOAI)](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) and [Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/) and use [Azure Private Endpoints](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview) to connect privately and securely to these services. The chat UIs are built using [Chainlit](https://docs.chainlit.io/overview), an open-source Python package designed explicitly for creating AI applications. Chainlit seamlessly integrates with [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [LlamaIndex](https://gpt-index.readthedocs.io/en/latest/), and [LangFlow](https://github.com/logspace-ai/langflow), making it a powerful tool for developing ChatGPT-like applications with ease.
 
 By following our example, you can quickly create sophisticated chat applications that utilize cutting-edge technologies, empowering users with intelligent conversational capabilities.
 
@@ -47,7 +47,7 @@ The following diagram shows the architecture and network topology of the sample:
 
 ![Architecture](images/architecture.png)
 
-This sample provides two sets of Terraform modules to deploy, respectively, the infrastructure and the chat applications. 
+This sample provides two sets of Terraform modules to deploy the infrastructure and the chat applications. 
 
 ## Infrastructure Terraform Modules
 
@@ -57,11 +57,11 @@ You can use the Terraform modules in the `terraform/infra` folder to deploy the 
   - `ContainerApps`: this subnet hosts the [Azure Container Apps Environment](https://learn.microsoft.com/en-us/azure/container-apps/environment).
   - `PrivateEndpoints`: this subnet contains the [Azure Private Endpoints](https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview) to the [Azure OpenAI Service (AOAI)](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview) and [Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/) resources.
 - [azurerm_container_app_environment](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/container_app_environment): the [Azure Container Apps Environment](https://learn.microsoft.com/en-us/azure/container-apps/environment) hosting the [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview).
-- [azurerm_cognitive_account](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cognitive_account): an [Azure OpenAI Service (AOAI)](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview) with a [GPT-3.5](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#chatgpt-gpt-35-turbo) model used by the chatbot applications. Azure OpenAI Service gives customers advanced language AI with OpenAI GPT-4, GPT-3, Codex, and DALL-E models with the security and enterprise promise of Azure. Azure OpenAI co-develops the APIs with OpenAI, ensuring compatibility and a smooth transition from one to the other. The Terraform modules create the following models:
+- [azurerm_cognitive_account](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cognitive_account): an [Azure OpenAI Service (AOAI)](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview) with a [GPT-3.5](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#chatgpt-gpt-35-turbo) model used by the chatbot applications. Azure OpenAI Service gives customers advanced language AI with OpenAI GPT-4, GPT-3, Codex, and DALL-E models with Azure's security and enterprise promise. Azure OpenAI co-develops the APIs with OpenAI, ensuring compatibility and a smooth transition from one to the other. The Terraform modules create the following models:
   - [GPT-35](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#gpt-35): a `gpt-35-turbo-16k` model is used to generate human-like and engaging conversational responses.
-  - [Embeddings model](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#embeddings-models): the `text-embedding-ada-002` model is to transform input documents into meaningful and compact numerical representations called embeddings. Embeddings capture the semantic or contextual information of the input data in a lower-dimensional space, making it easier for machine learning algorithms to process and analyze the data effectively. Embeddings can be stored into a vector database, such as [ChromaDB](https://docs.trychroma.com/) or [Facebook AI Similarity Search](https://faiss.ai/index.html), designed specifically for efficient storage, indexing, and retrieval of vector embeddings.
+  - [Embeddings model](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#embeddings-models): the `text-embedding-ada-002` model is to transform input documents into meaningful and compact numerical representations called embeddings. Embeddings capture the semantic or contextual information of the input data in a lower-dimensional space, making it easier for machine learning algorithms to process and analyze the data effectively. Embeddings can be stored in a vector database, such as [ChromaDB](https://docs.trychroma.com/) or [Facebook AI Similarity Search](https://faiss.ai/index.html), explicitly designed for efficient storage, indexing, and retrieval of vector embeddings.
 - [azurerm_user_assigned_identity](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/user_assigned_identity): a [user-defined managed identity](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) used by the chatbot applications to acquire a security token to call the [Chat Completion API](https://platform.openai.com/docs/api-reference/chat) of the [ChatGPT model](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#chatgpt-gpt-35-turbo) provided by the [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview) and to call the [Embedding model](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#embeddings-models).
-- [azurerm_container_registry](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_registry): an [Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/) to build, store, and manage container images and artifacts in a private registry for all container deployments. In this sample, the registry is used to store the container images of the two chat applications.
+- [azurerm_container_registry](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_registry): an [Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/) to build, store, and manage container images and artifacts in a private registry for all container deployments. In this sample, the registry stores the container images of the two chat applications.
 - [azurerm_private_endpoint](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint): an [Azure Private Endpoint](https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview) is created for each of the following resources:
   - [Azure OpenAI Service (AOAI)](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview)
   - [Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/)
@@ -78,8 +78,8 @@ You can use the Terraform modules in the `terraform/infra` folder to deploy the 
 You can use these Terraform modules in the `terraform/apps` folder to deploy the [Azure Container Apps (ACA)](https://learn.microsoft.com/en-us/azure/container-apps/overview) using the Docker container images stored in the [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-intro) that you deployed at the previous step.
 
 - [azurerm_container_app](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/container_app): this samples deploys the following applications:
-  - **chatapp**: this simple chat application utilizes OpenAI's language models for generating completion responses in real-time.
-  - **docapp**: This chat application goes beyond simple conversations. Users can upload up to 10 `.pdf` and `.docx` documents, which are then processed to create vector embeddings. These embeddings are stored in ChromaDB for efficient retrieval. Users can pose questions about the uploaded documents and view the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought),  enabling easy exploration of the reasoning process. The completion message contains links to the text chunks in the documents that were used a source for the response.
+  - **chatapp**: this simple chat application utilizes OpenAI's language models to generate real-time completion responses.
+  - **docapp**: This chat application goes beyond conversations. Users can upload up to 10 `.pdf` and `.docx` documents, which are then processed to create vector embeddings. These embeddings are stored in ChromaDB for efficient retrieval. Users can pose questions about the uploaded documents and view the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought),  enabling easy exploration of the reasoning process. The completion message contains links to the text chunks in the documents that were used as a source for the response.
 
 ## Azure Container Apps
 
@@ -87,7 +87,7 @@ You can use these Terraform modules in the `terraform/apps` folder to deploy the
 
 With Azure Container Apps, developers can package their applications into containers using popular containerization technologies such as [Docker](https://www.docker.com/). These containers encapsulate the application and its dependencies, ensuring consistent execution across different environments.
 
-Powered by [Kubernetes](https://kubernetes.io/) and open-source technologies like [Dapr](https://dapr.io/), [KEDA](https://keda.sh/), and [envoy](https://www.envoyproxy.io/), the service abstracts away the complexities of managing the infrastructure, including provisioning, scaling, and monitoring, allowing developers to focus solely on building and deploying their applications. Azure Container Apps handles automatic scaling, load balancing, and natively integrates with other Azure services, such as [Azure Monitor](https://learn.microsoft.com/en-us/azure/container-apps/observability) and [Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/), to provide a comprehensive and secure application deployment experience.
+Powered by [Kubernetes](https://kubernetes.io/) and open-source technologies like [Dapr](https://dapr.io/), [KEDA](https://keda.sh/), and [envoy](https://www.envoyproxy.io/), the service abstracts away the complexities of managing the infrastructure, including provisioning, scaling, and monitoring, allowing developers to focus solely on building and deploying their applications. Azure Container Apps handles automatic scaling, and load balancing, and natively integrates with other Azure services, such as [Azure Monitor](https://learn.microsoft.com/en-us/azure/container-apps/observability) and [Azure Container Registry (ACR)](https://learn.microsoft.com/en-us/azure/container-registry/), to provide a comprehensive and secure application deployment experience.
 
 Azure Container Apps offers benefits such as rapid deployment, easy scalability, cost-efficiency, and seamless integration with other Azure services, making it an attractive choice for modern application development and deployment scenarios.
 
@@ -95,21 +95,21 @@ Azure Container Apps offers benefits such as rapid deployment, easy scalability,
 
 The [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview) is a platform offered by Microsoft Azure that provides cognitive services powered by [OpenAI](https://openai.com/) models. One of the models available through this service is the [ChatGPT](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#gpt-4-models) model, which is designed for interactive conversational tasks. It allows developers to integrate natural language understanding and generation capabilities into their applications.
 
-Azure OpenAI Service provides REST API access to OpenAI's powerful language models including the [GPT-3](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#gpt-3-models), [Codex](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#codex-models) and [Embeddings](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#codex-models) model series. In addition, the new [GPT-4](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#gpt-4-models) and [ChatGPT](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#chatgpt-gpt-35-turbo) model series have now reached general availability. These models can be easily adapted to your specific task including but not limited to content generation, summarization, semantic search, and natural language to code translation. Users can access the service through REST APIs, Python SDK, or our web-based interface in the Azure OpenAI Studio.
+Azure OpenAI Service provides REST API access to OpenAI's powerful language models including the [GPT-3](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#gpt-3-models), [Codex](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#codex-models) and [Embeddings](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#codex-models) model series. In addition, the new [GPT-4](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#gpt-4-models) and [ChatGPT](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#chatgpt-gpt-35-turbo) model series have now reached general availability. These models can be easily adapted to your specific task, including but not limited to content generation, summarization, semantic search, and natural language-to-code translation. Users can access the service through REST APIs, Python SDK, or our web-based interface in the Azure OpenAI Studio.
 
-You can use [Embeddings model](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#embeddings-models) to transform raw data or inputs into meaningful and compact numerical representations called embeddings. Embeddings capture the semantic or contextual information of the input data in a lower-dimensional space, making it easier for machine learning algorithms to process and analyze the data effectively. Embeddings can be stored into a vector database, such as [ChromaDB](https://docs.trychroma.com/) or [Facebook AI Similarity Search (FAISS)](https://faiss.ai/index.html), designed specifically for efficient storage, indexing, and retrieval of vector embeddings.
+You can use [Embeddings model](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#embeddings-models) to transform raw data or inputs into meaningful and compact numerical representations called embeddings. Embeddings capture the semantic or contextual information of the input data in a lower-dimensional space, making it easier for machine learning algorithms to process and analyze the data effectively. Embeddings can be stored in a vector database, such as [ChromaDB](https://docs.trychroma.com/) or [Facebook AI Similarity Search (FAISS)](https://faiss.ai/index.html), designed specifically for efficient storage, indexing, and retrieval of vector embeddings.
 
 The [Chat Completion API](https://platform.openai.com/docs/api-reference/chat/create), which is part of the Azure OpenAI Service, provides a dedicated interface for interacting with the [ChatGPT](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#chatgpt-gpt-35-turbo) and [GPT-4 models](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#gpt-4-models). This API is currently in preview and is the preferred method for accessing these models. The GPT-4 models can only be accessed through this API.
 
 [GPT-3](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#gpt-3-models), [GPT-3.5](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#chatgpt-gpt-35-turbo), and [GPT-4](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/models#gpt-4-models) models from OpenAI are prompt-based. With prompt-based models, the user interacts with the model by entering a text prompt, to which the model responds with a text completion. This completion is the model’s continuation of the input text. While these models are extremely powerful, their behavior is also very sensitive to the prompt. This makes prompt construction an important skill to develop. For more information, see [Introduction to prompt engineering](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/prompt-engineering).
 
-Prompt construction can be difficult. In practice, the prompt acts to configure the model weights to complete the desired task, but it's more of an art than a science, often requiring experience and intuition to craft a successful prompt. The goal of this article is to help get you started with this learning process. It attempts to capture general concepts and patterns that apply to all GPT models. However it's important to understand that each model behaves differently, so the learnings may not apply equally to all models.
+Prompt construction can be difficult. In practice, the prompt acts to configure the model weights to complete the desired task, but it's more of an art than a science, often requiring experience and intuition to craft a successful prompt. The goal of this article is to help get you started with this learning process. It attempts to capture general concepts and patterns that apply to all GPT models. However, it's essential to understand that each model behaves differently, so the learnings may not apply equally to all models.
 
 Prompt engineering refers to the process of creating instructions called prompts for Large Language Models (LLMs), such as OpenAI’s ChatGPT. With the immense potential of LLMs to solve a wide range of tasks, leveraging prompt engineering can empower us to save significant time and facilitate the development of impressive applications. It holds the key to unleashing the full capabilities of these huge models, transforming how we interact and benefit from them. For more information, see [Prompt engineering techniques](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/advanced-prompt-engineering?pivots=programming-language-chat-completions).
 
 ## Vector Databases
 
-A [vector database](https://learn.microsoft.com/en-us/semantic-kernel/memories/vector-db) is a specialized database that goes beyond traditional storage by organizing information in a way that simplifies the search for similar items. Instead of merely storing words or numbers, it leverages vector embeddings - unique numerical representations of information. These embeddings capture meaning, context, and relationships. For instance, words are represented as vectors, where similar words have similar vector values.
+A [vector database](https://learn.microsoft.com/en-us/semantic-kernel/memories/vector-db) is a specialized database that goes beyond traditional storage by organizing information to simplify the search for similar items. Instead of merely storing words or numbers, it leverages vector embeddings - unique numerical representations of data. These embeddings capture meaning, context, and relationships. For instance, words are represented as vectors, whereas similar words have similar vector values.
 
 The applications of vector databases are numerous and powerful. In language processing, they facilitate the discovery of related documents or sentences. By comparing the vector embeddings of different texts, finding similar or related information becomes faster and more efficient. This capability benefits search engines and recommendation systems, which can suggest relevant articles or products based on user interests.
 
@@ -119,18 +119,18 @@ Additionally, vector databases find applications in fraud detection, anomaly det
 
 Here is a list of the most popular vector databases:
 
-- [ChromaDB](https://docs.trychroma.com/) is a powerful database solution designed for efficient storage and retrieval of vector embeddings. It is commonly used in AI applications, including chatbots and document analysis systems. By storing embeddings in ChromaDB, users can easily search and retrieve similar vectors, enabling faster and more accurate matching or recommendation processes. ChromaDB offers excellent scalability, high performance, and supports various indexing techniques to optimize search operations. It is a versatile tool that enhances the functionality and efficiency of AI applications that rely on vector embeddings.
-- [Facebook AI Similarity Search (FAISS)](https://faiss.ai/index.html) is another widely used vector database. It is developed by Facebook AI Research and offers highly optimized algorithms for similarity search and clustering of vector embeddings. FAISS is known for its speed and scalability, making it suitable for large-scale applications. It offers different indexing methods like flat, IVF (Inverted File System), and HNSW (Hierarchical Navigable Small World) to efficiently organize and search vector data.
+- [ChromaDB](https://docs.trychroma.com/) is a powerful database solution that stores and retrieves vector embeddings efficiently. It is commonly used in AI applications, including chatbots and document analysis systems. By storing embeddings in ChromaDB, users can easily search and retrieve similar vectors, enabling faster and more accurate matching or recommendation processes. ChromaDB offers excellent scalability high performance, and supports various indexing techniques to optimize search operations. It is a versatile tool that enhances the functionality and efficiency of AI applications that rely on vector embeddings.
+- [Facebook AI Similarity Search (FAISS)](https://faiss.ai/index.html) is another widely used vector database. Facebook AI Research develops it and offers highly optimized algorithms for similarity search and clustering of vector embeddings. FAISS is known for its speed and scalability, making it suitable for large-scale applications. It offers different indexing methods like flat, IVF (Inverted File System), and HNSW (Hierarchical Navigable Small World) to organize and search vector data efficiently.
 - [SingleStore](https://www.singlestore.com/): SingleStore aims to deliver the world’s fastest distributed SQL database for data-intensive applications: SingleStoreDB, which combines transactional + analytical workloads in a single platform.
 - [Astra DB](https://docs.datastax.com/en/astra-serverless/docs/vector-search/overview.html): DataStax Astra DB is a cloud-native, multi-cloud, fully managed database-as-a-service based on Apache Cassandra, which aims to accelerate application development and reduce deployment time for applications from weeks to minutes.
-- [Milvus](https://milvus.io/): Milvus is an open source vector database built to power embedding similarity search and AI applications. Milvus makes unstructured data search more accessible, and provides a consistent user experience regardless of the deployment environment. Milvus 2.0 is a cloud-native vector database with storage and computation separated by design. All components in this refactored version of Milvus are stateless to enhance elasticity and flexibility.
-- [Qdrant](https://qdrant.tech/): Qdrant is a vector similarity search engine and database for AI applications. Along with open-source, Qdrant is also available in the cloud. It provides a production-ready service with an API to store, search, and manage points—vectors with an additional payload Qdrant is tailored to extended filtering support. It makes it useful for all sorts of neural-network or semantic-based matching, faceted search, and other applications.
-- [Pinecone](https://www.pinecone.io/): Pinecone is a fully managed vector database that makes it easy to add vector search to production applications. It combines state-of-the-art vector search libraries, advanced features such as filtering, and distributed infrastructure to provide high performance and reliability at any scale.
-- [Vespa](https://vespa.ai/): Vespa is a platform for applications combining data and AI, online. By building such applications on Vespa helps users avoid integration work to get features, and it can scale to suppot any amount of traffic and data. To deliver that, Vespa provides a broad range of query capabilities, a computation engine with support for modern machine-learned models, hands-off operability, data management and application development support. It is free and open source to use under the Apache 2.0 license.
-- [Zilliz](https://zilliz.com/): Milvus is an open-source vector database, with over 18,409 stars on GitHub and 3.4 million+ downloads. Milvus supports billion-scale vector search, and has over 1,000 enterprise users. Zilliz Cloud provides a fully-managed Milvus service, made by the creators of Milvus. This helps to simplify the process of deploying and scaling vector search applications by eliminating the need to create and maintain complex data infrastructure. And as a DBaaS, Zilliz simplifies the process of deploying and scaling vector search applications by eliminating the need to create and maintain complex data infrastructure.
-- [Weaviate](https://weaviate.io/): Weaviate is an open-source vector database used to store data objects and vector embeddings from ML-models, and scale into billions of data objects, from the company of the same name in Amsterdam. Users can can index billions of data objects to search through, and combine multiple search techniques, such as keyword-based and vector search, to provide search experiences.
+- [Milvus](https://milvus.io/): Milvus is an open source vector database built to power embedding similarity search and AI applications. Milvus makes unstructured data search more accessible and provides a consistent user experience regardless of the deployment environment. Milvus 2.0 is a cloud-native vector database with storage and computation separated by design. All components in this refactored version of Milvus are stateless to enhance elasticity and flexibility.
+- [Qdrant](https://qdrant.tech/): Qdrant is a vector similarity search engine and database for AI applications. Along with open-source, Qdrant is also available in the cloud. It provides a production-ready service with an API to store, search, and manage points—vectors with an additional payload. Qdrant is tailored to extended filtering support. It makes it useful for all sorts of neural-network or semantic-based matching, faceted search, and other applications.
+- [Pinecone](https://www.pinecone.io/): Pinecone is a fully managed vector database that makes adding vector search to production applications accessible. It combines state-of-the-art vector search libraries, advanced features such as filtering, and distributed infrastructure to provide high performance and reliability at any scale.
+- [Vespa](https://vespa.ai/): Vespa is a platform for applications combining data and AI, online. By building such applications on Vespa helps users avoid integration work to get features, and it can scale to support any amount of traffic and data. To deliver that, Vespa provides a broad range of query capabilities, a computation engine with support for modern machine-learned models, hands-off operability, data management, and application development support. It is free and open source to use under the Apache 2.0 license.
+- [Zilliz](https://zilliz.com/): Milvus is an open-source vector database, with over 18,409 stars on GitHub and 3.4 million+ downloads. Milvus supports billion-scale vector search and has over 1,000 enterprise users. Zilliz Cloud provides a fully-managed Milvus service made by the creators of Milvus. This helps to simplify the process of deploying and scaling vector search applications by eliminating the need to create and maintain complex data infrastructure. As a DBaaS, Zilliz simplifies the process of deploying and scaling vector search applications by eliminating the need to create and maintain complex data infrastructure.
+- [Weaviate](https://weaviate.io/): Weaviate is an open-source vector database used to store data objects and vector embeddings from ML-models, and scale into billions of data objects from the same name company in Amsterdam. Users can index billions of data objects to search through and combine multiple search techniques, such as keyword-based and vector search, to provide search experiences.
 
-This sample makes of [ChromaDB](https://docs.trychroma.com/) vector database, but you can easily modify the code to use anothervector database. You can even use [Azure Cache for Redis Enterprise](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-overview) to store the vector embeddings and compute vector similarity with high performance and low latency. For more information, see [Vector Similarity Search with Azure Cache for Redis Enterprise](https://techcommunity.microsoft.com/t5/azure-developer-community-blog/vector-similarity-search-with-azure-cache-for-redis-enterprise/ba-p/3822059)
+This sample makes of [ChromaDB](https://docs.trychroma.com/) vector database, but you can easily modify the code to use another vector database. You can even use [Azure Cache for Redis Enterprise](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-overview) to store the vector embeddings and compute vector similarity with high performance and low latency. For more information, see [Vector Similarity Search with Azure Cache for Redis Enterprise](https://techcommunity.microsoft.com/t5/azure-developer-community-blog/vector-similarity-search-with-azure-cache-for-redis-enterprise/ba-p/3822059)
 
 ## LangChain
 
@@ -140,7 +140,7 @@ LangChain's integrations cover an extensive range of systems, tools, and service
 
 ## Chainlit
 
-[Chainlit](https://docs.chainlit.io/overview) is an open-source Python package that is specifically designed to create user interfaces (UIs) for AI applications. It simplifies the process of building interactive chats and interfaces, making it faster and more efficient to develop AI-powered applications. While Streamlit is a general-purpose UI library, Chainlit is purpose-built for AI applications and seamlessly integrates with other AI technologies such as [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [LlamaIndex](https://gpt-index.readthedocs.io/en/latest/), and [LangFlow](https://github.com/logspace-ai/langflow).
+[Chainlit](https://docs.chainlit.io/overview) is an open-source Python package that is specifically designed to create user interfaces (UIs) for AI applications. It simplifies the process of building interactive chats and interfaces, making developing AI-powered applications faster and more efficient. While Streamlit is a general-purpose UI library, Chainlit is purpose-built for AI applications and seamlessly integrates with other AI technologies such as [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [LlamaIndex](https://gpt-index.readthedocs.io/en/latest/), and [LangFlow](https://github.com/logspace-ai/langflow).
 
 With Chainlit, developers can easily create intuitive UIs for their AI models, including ChatGPT-like applications. It provides a user-friendly interface for users to interact with AI models, enabling conversational experiences and information retrieval. Chainlit also offers unique features, such as the ability to display the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought), which allows users to explore the reasoning process directly within the UI. This feature enhances transparency and enables users to understand how the AI arrives at its responses or recommendations.
 
@@ -255,7 +255,7 @@ resource "azurerm_monitor_diagnostic_setting" "settings" {
 
 Azure Cognitive Services use custom subdomain names for each resource created through the [Azure portal](https://portal.azure.com), [Azure Cloud Shell](https://azure.microsoft.com/features/cloud-shell/), [Azure CLI](/cli/azure/install-azure-cli), [Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview), [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/overview), or [Terraform](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cognitive_account). Unlike regional endpoints, which were common for all customers in a specific Azure region, custom subdomain names are unique to the resource. Custom subdomain names are required to enable features like Azure Active Directory (Azure AD) for authentication. In our case, we need to specify a custom subdomain for our [Azure OpenAI Service](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cognitive_account) as our chatbot applications will use an Azure AD security token to access it. By default, the `terraform/infra/modules/openai/main.tf` module sets the value of the `custom_subdomain_name` parameter to the lowercase name of the Azure OpenAI resource. For more information on custom subdomains, see [Custom subdomain names for Cognitive Services](https://learn.microsoft.com/en-us/azure/cognitive-services/cognitive-services-custom-subdomains?source=docs).
 
-This Terraform module allows you to pass an array containing the definition of one or more model deployments in the `deployments` variable. For more information on model deployments, see [Create a resource and deploy a model using Azure OpenAI](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/create-resource?pivots=web-portal). The `openai_deployments` variable in the`terraform/infra/variables.tf` file defines the structure and the default models deployed by the sample:
+This Terraform module allows you to pass an array containing the definition of one or more model deployments in the `deployments` variable. For more information on model deployments, see [Create a resource and deploy a model using Azure OpenAI](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/create-resource?pivots=web-portal). The `openai_deployments` variable in the `terraform/infra/variables.tf` file defines the structure and the default models deployed by the sample:
 
 ```terraform
 variable "openai_deployments" {
@@ -669,15 +669,15 @@ This is the definition of each variable:
 - `container_registry_name`: the name of [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/) used to hold the container images of the chat applications.
 - `workload_managed_identity_name`: the name of the [user-defined managed identity](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) used by the chat applications to authenticate with [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) and [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/).
 - `container_apps`: the definition of the two chat applications. The application configuration does not specify the following data because the `container_app` module later defines this information:
-  - `image`: this field contains the name and tag of the container imag but not the login server of the [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/).
-  - `identity`: the identity of the container app.
-  - `registry`: the registry hosting the container image for the application.
-  - `AZURE_CLIENT_ID`: the client id of the user-defined managed identity used by the application to to authenticate with [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) and [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/).
-  - `AZURE_OPENAI_TYPE`: this environment variable specifies the authentication type with [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview): if you set the value of the `AZURE_OPENAI_TYPE` environment variable to `azure`, you need to specify the OpenAI key as a value for the `AZURE_OPENAI_KEY` environment variable. Instead, if you set the value to `azure_ad`, in the application code assign an Azure AD security token to the `openai_api_key` property. For more information, see [How to switch between OpenAI and Azure OpenAI endpoints with Python](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/switching-endpoints).
+  - `image`: This field contains the name and tag of the container image but not the login server of the [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/).
+  - `identity`: The identity of the container app.
+  - `registry`: The registry hosting the container image for the application.
+  - `AZURE_CLIENT_ID`: The client id of the user-defined managed identity used by the application to authenticate with [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) and [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/).
+  - `AZURE_OPENAI_TYPE`: This environment variable specifies the authentication type with [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview): if you set the value of the `AZURE_OPENAI_TYPE` environment variable to `azure,` you need to specify the OpenAI key as a value for the `AZURE_OPENAI_KEY` environment variable. Instead, if you set the value to `azure_ad` in the application code, assign an Azure AD security token to the `openai_api_key` property. For more information, see [How to switch between OpenAI and Azure OpenAI endpoints with Python](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/switching-endpoints).
 
 ## Container App Module
 
-The `terraform/apps/modules/container_app/main.tf` module is utilized to create the [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview). The module defines and uses the following [data source](https://developer.hashicorp.com/terraform/language/data-sources) for the [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/), [Azure Container Apps Environment](https://learn.microsoft.com/en-us/azure/container-apps/environment), and [user-defined managed identity](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) created when deploying the infrastructure. These data sources are used to acces the properties of these Azure resources.
+The `terraform/apps/modules/container_app/main.tf` module is utilized to create the [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview). The module defines and uses the following [data source](https://developer.hashicorp.com/terraform/language/data-sources) for the [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/), [Azure Container Apps Environment](https://learn.microsoft.com/en-us/azure/container-apps/environment), and [user-defined managed identity](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) created when deploying the infrastructure. These data sources are used to access the properties of these Azure resources.
 
 ```terraform
 data "azurerm_container_app_environment" "container_app_environment" {
@@ -953,15 +953,15 @@ Each chat application makes use of a [DefaultAzureCredential](https://learn.micr
 
 You can use a managed identity in a running container app to authenticate and authorize with any [service that supports Azure AD authentication](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/services-support-managed-identities#azure-services-that-support-azure-ad-authentication).  With managed identities:
 
-- Container apps and applications connect to resources with the managed identity. You don't need to manage credentials in your container app or container app.
+- Container apps and applications connect to resources with the managed identity. You don't need to manage credentials in your container apps.
 - You can use role-based access control to grant specific permissions to a managed identity.
 - System-assigned identities are automatically created and managed. They are deleted when your container app or container app is deleted.
-- You can add and delete user-assigned identities and assign them to multiple resources. They are independent of your container app or container app's lifecycle.
+- You can add and delete user-assigned identities and assign them to multiple resources. They are independent of your container app or the container app's lifecycle.
 - You can use managed identity to [authenticate with a private Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-apps/containers#container-registries) without a username and password to pull containers for your Container App.
 - You can use [managed identity to create connections for Dapr-enabled applications via Dapr components](https://learn.microsoft.com/en-us/azure/container-apps/dapr-overview)
 
 For more information, see [Managed identities in Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/managed-identity?tabs=portal%2Cdotnet).
-The workloads running in a container app can use the Azure Identity client libraries to acquire a security token from Azure Active Directory. You can choose one of the following approaches inside your code:
+The workloads running in a container app can use the Azure Identity client libraries to acquire a security token from the Azure Active Directory. You can choose one of the following approaches inside your code:
 
 - Use `DefaultAzureCredential`, which will attempt to use the `WorkloadIdentityCredential`.
 - Create a `ChainedTokenCredential` instance that includes `WorkloadIdentityCredential`.
@@ -977,7 +977,7 @@ The following table provides the minimum package version required for each langu
 | JavaScript | [@azure/identity](/javascript/api/overview/azure/identity-readme) | 3.2.0    | [Link](https://github.com/Azure/azure-workload-identity/tree/main/examples/azure-identity/node)   |
 | Python     | [azure-identity](/python/api/overview/azure/identity-readme)      | 1.13.0        | [Link](https://github.com/Azure/azure-workload-identity/tree/main/examples/azure-identity/python) |
 
-**NOTE**: When using Azure Identity client library with Azure Container Apps, the client id of the managed identity must be specified. When using the `DefaultAzureCredential`, you can explicitly specify the client id of the container app manged identity in the `AZURE_CLIENT_ID` environment variable.
+**NOTE**: When using Azure Identity client library with Azure Container Apps, the client ID of the managed identity must be specified. When using the `DefaultAzureCredential`, you can explicitly specify the client ID of the container app manged identity in the `AZURE_CLIENT_ID` environment variable.
 
 ## Simple Chat Application
 
@@ -985,31 +985,31 @@ The Simple Chat Application is a  large language model-based chatbot that allows
 
 ![Chainlit Welcome Screen](/images/chainlit-welcome-screen.png)
 
-You can modify the welcome screen in markdown by editing the `chainlit.md` file at the root of the project. If you do not want a welcome screen, just leave the file empty.
+You can modify the welcome screen in markdown by editing the `chainlit.md` file at the project's root. If you do not want a welcome screen, leave the file empty.
 The following picture shows what happens when a user submits a new message in the chat. 
 
 ![Chainlit Simple Chat](/images/chainlit-simple-chat.png)
 
 Chainlit can render messages in markdown format and provides classes to support the following elements:
 
-- [Audio](https://docs.chainlit.io/api-reference/elements/audio): the `Audio` class allows you to display an audio player for a specific audio file in the chatbot user interface. You must provide either a URL or a path or content bytes.
-- [Avatar](https://docs.chainlit.io/api-reference/elements/avatar): the `Avatar` class allows you to display an avatar image next to a message instead of the author name. You need to send the element once. Next if the name of an avatar matches the name of an author, the avatar will be automatically displayed. You must provide either a URL or a path or content bytes.
-- [File](https://docs.chainlit.io/api-reference/elements/file): the `File` class allows you to display a button that lets users download the content of the file. You must provide either a URL or a path or content bytes.
-- [Image](https://docs.chainlit.io/api-reference/elements/image): the `Image` class is designed to create and handle image elements to be sent and displayed in the chatbot user interface. You must provide either a URL or a path or content bytes.
-- [Pdf](https://docs.chainlit.io/api-reference/elements/pdf): the `Pdf` class allows you to display a PDF hosted remotely or locally in the chatbot UI. This class either takes a URL of a PDF hosted online, or the path of a local PDF.
-- [Pyplot](https://docs.chainlit.io/api-reference/elements/pyplot): the `Pyplot` class allows you to display a [Matplotlib](https://matplotlib.org/) pyplot chart in the chatbot UI. This class takes a pyplot figure.
-- [TaskList](https://docs.chainlit.io/api-reference/elements/tasklist): the `TaskList` class allows you to display a task list next to the chatbot UI.
-- [Text](https://docs.chainlit.io/api-reference/elements/text): the `Text` class allows you to display a text element in the chatbot UI. This class takes a string and creates a text element that can be sent to the UI. It supports the markdown syntax for formatting text. You must provide either a URL or a path or content bytes.
+- [Audio](https://docs.chainlit.io/api-reference/elements/audio): The `Audio` class allows you to display an audio player for a specific audio file in the chatbot user interface. You must provide either a URL or a path or content bytes.
+- [Avatar](https://docs.chainlit.io/api-reference/elements/avatar): The `Avatar` class allows you to display an avatar image next to a message instead of the author's name. You need to send the element once. Next,, if an avatar's name matches an author's name, the avatar will be automatically displayed. You must provide either a URL or a path or content bytes.
+- [File](https://docs.chainlit.io/api-reference/elements/file): The `File` class allows you to display a button that lets users download the content of the file. You must provide either a URL or a path or content bytes.
+- [Image](https://docs.chainlit.io/api-reference/elements/image): The `Image` class is designed to create and handle image elements to be sent and displayed in the chatbot user interface. You must provide either a URL or a path or content bytes.
+- [Pdf](https://docs.chainlit.io/api-reference/elements/pdf): The `Pdf` class allows you to display a PDF hosted remotely or locally in the chatbot UI. This class either takes a URL of a PDF hosted online or the path of a local PDF.
+- [Pyplot](https://docs.chainlit.io/api-reference/elements/pyplot): The `Pyplot` class allows you to display a [Matplotlib](https://matplotlib.org/) pyplot chart in the chatbot UI. This class takes a pyplot figure.
+- [TaskList](https://docs.chainlit.io/api-reference/elements/tasklist): The `TaskList` class allows you to display a task list next to the chatbot UI.
+- [Text](https://docs.chainlit.io/api-reference/elements/text): The `Text` class allows you to display a text element in the chatbot UI. This class takes a string and creates a text element that can be sent to the UI. It supports the markdown syntax for formatting text. You must provide either a URL or a path or content bytes.
 
-Chainlit provides three [display options](https://docs.chainlit.io/concepts/elements#display-options) that determine how an element is rendered in the context where it is being used. The ElementDisplay type represents these options. The following display options are available:
+Chainlit provides three [display options](https://docs.chainlit.io/concepts/elements#display-options) that determine how an element is rendered in the context of its use. The ElementDisplay type represents these options. The following display options are available:
 
 - `Side`: this option displays the element on a sidebar. The sidebar is hidden by default and opened upon element reference click.
-- `Page`: this option displays the element on a separate page. The user is redirected to the page upon element reference click.
-- `Inline`: this option displays the element below the message. If the element is [global](https://docs.chainlit.io/concepts/elements#global-elements), the element is displayed if the element is explicitly mentioned in the message. If the element is [scoped](https://docs.chainlit.io/concepts/elements#scoped-elements), the element is displayed regardless of whether it is explicitly mentioned in the message.
+- `Page`: this option displays the element on a separate page. The user is redirected to the page upon an element reference click.
+- `Inline`: this option displays the element below the message. If the element is [global](https://docs.chainlit.io/concepts/elements#global-elements), it is displayed if it is explicitly mentioned in the message. If the element is [scoped](https://docs.chainlit.io/concepts/elements#scoped-elements), it is displayed regardless of whether it is expressly mentioned in the message.
 
 You can click the user icon on the UI to access the chat settings and choose, for example, between the light and dark theme.
 
-The application is built in Python. Let's take a look at the individual parts of the application code. In the following section, the Python code starts by importing necessary packages/modules.
+The application is built in Python. Let's take a look at the individual parts of the application code. In the following section, the Python code starts by importing the necessary packages/modules.
 
 ```python
 # Import packages
@@ -1032,14 +1032,14 @@ if os.path.exists(".env"):
 
 These are the libraries used by the chat application:
 
-1. `os`: this module provides a way of interacting with the operating system, enabling the code to access environment variables, file paths, etc.
-2. `sys`: this module provides access to some variables used or maintained by the interpreter and functions that interact with the interpreter.
-3. `time`: this module provides various time-related functions for time manipulation and measurement.
-4. `openai`: the OpenAI Python library provides convenient access to the OpenAI API from applications written in the Python language. It includes a pre-defined set of classes for API resources that initialize themselves dynamically from API responses which makes it compatible with a wide range of versions of the OpenAI API. You can find usage examples for the OpenAI Python library in our [API reference](https://beta.openai.com/docs/api-reference?lang=python) and the [OpenAI Cookbook](https://github.com/openai/openai-cookbook/).
-5. `random`: this module provides functions to generate random numbers.
-6. `logging`: this module provides flexible logging of messages.
+1. `os`: This module provides a way of interacting with the operating system, enabling the code to access environment variables, file paths, etc.
+2. `sys`: This module provides access to some variables used or maintained by the interpreter and functions that interact with the interpreter.
+3. `time`: This module provides various time-related time manipulation and measurement functions.
+4. `openai`: The OpenAI Python library provides convenient access to the OpenAI API from applications written in Python. It includes a pre-defined set of classes for API resources that initialize themselves dynamically from API responses which makes it compatible with a wide range of versions of the OpenAI API. You can find usage examples for the OpenAI Python library in our [API reference](https://beta.openai.com/docs/api-reference?lang=python) and the [OpenAI Cookbook](https://github.com/openai/openai-cookbook/).
+5. `random`: This module provides functions to generate random numbers.
+6. `logging`: This module provides flexible logging of messages.
 7. `chainlit as cl`: This imports the [Chainlit](https://docs.chainlit.io/overview) library and aliases it as `cl`. Chainlit is used to create the UI of the application.
-8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad`, a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0(https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity, whose client ID is defined in the `AZURE_CLIENT_ID` environment variable.
+8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad,` a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0(https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity, whose client ID is defined in the `AZURE_CLIENT_ID` environment variable.
 9. `load_dotenv` and `dotenv_values` from `dotenv`: [Python-dotenv](https://github.com/theskumar/python-dotenv) reads key-value pairs from a `.env` file and can set them as environment variables. It helps in the development of applications following the [12-factor](http://12factor.net/) principles.
 
 The `requirements.txt` file under the `src` folder contains the list of packages used by the chat applications. You can restore these packages in your environment using the following command:
@@ -1204,7 +1204,7 @@ Here is a detailed explanation of the function steps:
 - `@cl.on_message`: The [on_message](https://docs.chainlit.io/api-reference/on-message) decorator registers a callback function `main(message: str)` to be called when the user submits a new message in the chat. It is the main function responsible for handling the chat logic.
 - `cl.user_session.get()`: This API call retrieves a value from the user's session data stored in the [user_session](https://docs.chainlit.io/concepts/user-session) dictionary. In this case, it fetches the `message_history` from the user's session to maintain the chat history.
 - `message_history.append()`: This API call appends a new message to the `message_history` list. It is used to add the user's message and the assistant's response to the chat history.
-- `cl.Message()`: This API call creates a Chainlit [Message](https://docs.chainlit.io/api-reference/message#update-a-message) object. The `Message` class is designed to send, stream, edit or remove messages in the chatbot user interface. In this sample, the `Message` object is used to stream the OpenAI response in the chat.
+- `cl.Message()`: This API call creates a Chainlit [Message](https://docs.chainlit.io/api-reference/message#update-a-message) object. The `Message` class is designed to send, stream, edit, or remove messages in the chatbot user interface. In this sample, the `Message` object is used to stream the OpenAI response in the chat.
 - `msg.stream_token()`: The [stream_token](https://docs.chainlit.io/concepts/streaming/python) method of the [Message](https://docs.chainlit.io/api-reference/message#update-a-message) class streams a token to the response message. It is used to send the response from the OpenAI Chat API in chunks to ensure real-time streaming in the chat.
 - `await openai.ChatCompletion.acreate()`: This API call sends a message to the [OpenAI Chat API](https://platform.openai.com/docs/api-reference/chat/create) in an asynchronous mode and streams the response. It uses the provided `message_history` as context for generating the assistant's response.
 - The section also includes an exception handling block that retries the OpenAI API call in case of specific errors like timeouts, API errors, connection errors, invalid requests, service unavailability, and other non-retriable errors. You can replace this code with a general-purpose retrying library for Python like [Tenacity](https://tenacity.readthedocs.io/en/latest/).
@@ -1240,6 +1240,7 @@ model = os.getenv("AZURE_OPENAI_MODEL")
 system_content = os.getenv("AZURE_OPENAI_SYSTEM_MESSAGE", "You are a helpful assistant.")
 max_retries = int(os.getenv("MAX_RETRIES", 5))
 backoff_in_seconds = float(os.getenv("BACKOFF_IN_SECONDS", 1))
+token_refresh_interval = int(os.getenv("TOKEN_REFRESH_INTERVAL", 1800))
 
 # Configure OpenAI
 openai.api_type = api_type
@@ -1263,7 +1264,7 @@ def backoff(attempt : int) -> float:
 # Refresh the OpenAI security token every 45 minutes
 def refresh_openai_token():
     token = cl.user_session.get('openai_token')
-    if token ==  None or token.expires_on < int(time.time()) - 1800:
+    if token ==  None or token.expires_on < int(time.time()) - token_refresh_interval:
         cl.user_session.set('openai_token', default_credential.get_token(
             "https://cognitiveservices.azure.com/.default"))
         openai.api_key = cl.user_session.get('openai_token').token
@@ -1355,7 +1356,7 @@ You can run the application locally using the following command. The `-w` flag` 
 
 ## Documents QA Chat
 
-The Documents QA Chat application allows users to submit up to 10 `.pdf` and `.docx` documents. The application processes the uploaded documents to create vector embeddings. These embeddings are stored in [ChromaDB](https://docs.trychroma.com/) vector database for efficient retrieval. Users can pose questions about the uploaded documents and view the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought),  enabling easy exploration of the reasoning process. The completion message contains links to the text chunks in the documents that were used as a source for the response. The following picture shows the chat application interface. As you can see, you can click the `Browse` button and choose up to up to 10 `.pdf` and `.docx` documents to upload. Alternatively, you can just drag and drop the files over the control area.
+The Documents QA Chat application allows users to submit up to 10 `.pdf` and `.docx` documents. The application processes the uploaded documents to create vector embeddings. These embeddings are stored in [ChromaDB](https://docs.trychroma.com/) vector database for efficient retrieval. Users can pose questions about the uploaded documents and view the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought),  enabling easy exploration of the reasoning process. The completion message contains links to the text chunks in the documents that were used as a source for the response. The following picture shows the chat application interface. As you can see, you can click the `Browse` button and choose up to 10 `.pdf` and `.docx` documents to upload. Alternatively, you can just drag and drop the files over the control area.
 
 ![Chainlit Upload documents](/images/chainlit-before-upload.png)
 
@@ -1367,19 +1368,19 @@ When the code finished creating embeddings, the UI is ready to receive user's qu
 
 ![Chainlit Document Reply ](images/chainlit-document-reply.png)
 
-As your chat application grows in complexity, understanding the indvidual steps for generating a specific answer can become challenging. To solve this issue, Chainlit allows you to easily explore the reasoning process right from the user interface using the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought). If you are using the [LangChain](https://python.langchain.com/docs/get_started/introduction.html) integration, every intermediary step is automatically sent and displayed in the Chainlit UI just clicking and expanding the steps, as shown in the following picture:
+As your chat application grows in complexity, understanding the individual steps for generating a specific answer can become challenging. To solve this issue, Chainlit allows you to easily explore the reasoning process right from the user interface using the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought). If you are using the [LangChain](https://python.langchain.com/docs/get_started/introduction.html) integration, every intermediary step is automatically sent and displayed in the Chainlit UI just clicking and expanding the steps, as shown in the following picture:
 
 ![Chainlit Chain of Thought ](images/chainlit-chain-of-thought.png)
 
-To see the text chunks that were used by large language model to originate the response, you can click the sources links, as shown in the following picture:
+To see the text chunks that were used by the large language model to originate the response, you can click the sources links, as shown in the following picture:
 
 ![Chainlit Source](images/chainlit-source.png)
 
-In the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought), below each message you can find an `edit` button, in the form of a pencil icon, if that message was generated by a prompt. Clicking on it opens the [Prompt Playground](https://docs.chainlit.io/concepts/prompt-playground) dialog which allows you to modify and iterate on the prompt as needed.
+In the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought), below each message, you can find an `edit` button, as a pencil icon, if that message was generated by a prompt. Clicking on it opens the [Prompt Playground](https://docs.chainlit.io/concepts/prompt-playground) dialog which allows you to modify and iterate on the prompt as needed.
 
 ![Chainlit Prompt Playground](./images/chainlit-prompt-playground.png)
 
-Let's take a look at the individual parts of the application code. In the following section, the Python code starts by importing necessary packages/modules.
+Let's take a look at the individual parts of the application code. In the following section, the Python code starts by importing the necessary packages/modules.
 
 ```python
 # Import packages
@@ -1419,13 +1420,13 @@ if os.path.exists(".env"):
 
 These are the libraries used by the chat application:
 
-1. `os`: this module provides a way of interacting with the operating system, enabling the code to access environment variables, file paths, etc.
-2. `sys`: this module provides access to some variables used or maintained by the interpreter and functions that interact with the interpreter.
-3. `time`: this module provides various time-related functions for time manipulation and measurement.
-4. `openai`: the OpenAI Python library provides convenient access to the OpenAI API from applications written in the Python language. It includes a pre-defined set of classes for API resources that initialize themselves dynamically from API responses which makes it compatible with a wide range of versions of the OpenAI API. You can find usage examples for the OpenAI Python library in our [API reference](https://beta.openai.com/docs/api-reference?lang=python) and the [OpenAI Cookbook](https://github.com/openai/openai-cookbook/).
-5. `random`: this module provides functions to generate random numbers.
-6. `logging`: this module provides flexible logging of messages.
-7. `chainlit as cl`: This imports the [Chainlit](https://docs.chainlit.io/overview) library and aliases it as `cl`. Chainlit is used to create the UI of the application.
+1. `os`: This module provides a way of interacting with the operating system, enabling the code to access environment variables, file paths, etc.
+2. `sys`: This module provides access to some variables used or maintained by the interpreter and functions that interact with the interpreter.
+3. `time`: This module provides various time-related functions for time manipulation and measurement.
+4. `openai`: the OpenAI Python library provides convenient access to the OpenAI API from applications written in the Python language. It includes a pre-defined set of classes for API resources that initialize themselves dynamically from API responses, which makes it compatible with a wide range of versions of the OpenAI API. You can find usage examples for the OpenAI Python library in our [API reference](https://beta.openai.com/docs/api-reference?lang=python) and the [OpenAI Cookbook](https://github.com/openai/openai-cookbook/).
+5. `random`: This module provides functions to generate random numbers.
+6. `logging`: This module provides flexible logging of messages.
+7. `chainlit as cl`: This imports the [Chainlit](https://docs.chainlit.io/overview) library and aliases it as `cl.` Chainlit is used to create the UI of the application.
 8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad`, a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity, whose client ID is defined in the `AZURE_CLIENT_ID` environment variable.
 9. `load_dotenv` and `dotenv_values` from `dotenv`: [Python-dotenv](https://github.com/theskumar/python-dotenv) reads key-value pairs from a `.env` file and can set them as environment variables. It helps in the development of applications following the [12-factor](http://12factor.net/) principles.
 10. `langchain`: Large language models (LLMs) are emerging as a transformative technology, enabling developers to build applications that they previously could not. However, using these LLMs in isolation is often insufficient for creating a truly powerful app - the real power comes when you can combine them with other sources of computation or knowledge. [LangChain](hhttps://pypi.org/project/langchain/) library aims to assist in the development of those types of applications.
@@ -1455,6 +1456,7 @@ text_splitter_chunk_overlap = int(os.getenv("TEXT_SPLITTER_CHUNK_OVERLAP", 10))
 embeddings_chunk_size = int(os.getenv("EMBEDDINGS_CHUNK_SIZE", 16))
 max_retries = int(os.getenv("MAX_RETRIES", 5))
 backoff_in_seconds = float(os.getenv("BACKOFF_IN_SECONDS", 1))
+token_refresh_interval = int(os.getenv("TOKEN_REFRESH_INTERVAL", 1800))
 
 # Configure system prompt
 system_template = """Use the following pieces of context to answer the users question.
@@ -1495,7 +1497,7 @@ Here's a brief explanation of each variable and related environment variable:
 3. `api_key`: The API key for the OpenAI API.
 4. `api_type`: A string representing the type of the OpenAI API.
 5. `api_version`: A string representing the version of the OpenAI API.
-6. `chat_completion_deployment`: the name of Azure OpenAI GPT model for chat completion.
+6. `chat_completion_deployment`: the name of the Azure OpenAI GPT model for chat completion.
 7. `embeddings_deployment`: the name of the Azure OpenAI deployment for embeddings.
 8. `model`: The model used for chat completion calls (e.g, `gpt-35-turbo-16k`).
 9. `max_size_mb`: the maximum size for the uploaded documents.
@@ -1547,7 +1549,7 @@ Then the application defines a function called `refresh_openai_token()` to refre
 ```python
 def refresh_openai_token():
     token = cl.user_session.get('openai_token')
-    if token is None or token.expires_on < int(time.time()) - 1800:
+    if token is None or token.expires_on < int(time.time()) - token_refresh_interval:
         cl.user_session.set('openai_token', default_credential.get_token("https://cognitiveservices.azure.com/.default"))
         openai.api_key = cl.user_session.get('openai_token').token
 ```
@@ -1582,7 +1584,7 @@ Here is a brief explanation of the function steps:
 - `@cl.on_chat_start`: The [on_chat_start](https://docs.chainlit.io/api-reference/on-chat-start) decorator registers a callback function `start_chat()` to be called when the Chainlit chat starts. It is used to set up the chat and send [avatars](https://docs.chainlit.io/api-reference/elements/avatar) for the Chatbot, Error, and User participants in the chat.
 - `cl.Avatar()`: the [Avatar](https://docs.chainlit.io/api-reference/elements/avatar) class allows you to display an avatar image next to a message instead of the author name. You need to send the element once. Next if the name of an avatar matches the name of an author, the avatar will be automatically displayed. You must provide either a URL or a path or content bytes.
 
-The following code is used to initialize the large language model (LLM) chain used to reply questions on the content of the uploaded documents. 
+The following code is used to initialize the large language model (LLM) chain used to reply to questions on the content of the uploaded documents. 
 
 ```python  
     # Initialize the file list to None
@@ -1663,7 +1665,7 @@ The following code processes each uploaded file by extracting its content.
 The next piece of code performs the following steps:
 
 1. It creates an [OpenAIEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.openai.OpenAIEmbeddings.html#langchain.embeddings.openai.OpenAIEmbeddings) configured to use the embeddings model in the Azure OpenAI Service to create embeddings from text chunks.
-2. It creates a [ChromaDB](https://docs.trychroma.com/) vector database using the `OpenAIEmbeddings` object, the text chuncks list, and metadata list.
+2. It creates a [ChromaDB](https://docs.trychroma.com/) vector database using the `OpenAIEmbeddings` object, the text chunks list, and the metadata list.
 3. It creates an [AzureChatOpenAI](https://api.python.langchain.com/en/latest/chat_models/langchain.chat_models.azure_openai.AzureChatOpenAI.html?highlight=azurechatopenai#langchain.chat_models.azure_openai.AzureChatOpenAI) LangChain object based on the GPR model hosted in Azure OpenAI Service. 
 4. It creates a chain using the [RetrievalQAWithSourcesChain.from_chain_type](https://api.python.langchain.com/en/latest/chains/langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.html?highlight=retrievalqawithsourceschain%20from_chain_type#langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.from_chain_type) API call uses previously created models and stores them as retrievers.
 5. It stores the metadata and text chunks in the user session using the `cl.user_session.set()` API call.
@@ -1788,7 +1790,7 @@ async def run(message: str):
             break
 ```
 
-The code below extracts the answer and sources from the API response and formats them to be sent as a message.
+The code below extracts the answers and sources from the API response and formats them to be sent as a message.
 
 - The `answer` and `sources` are obtained from the `response` dictionary.
 - The sources are then processed to find corresponding texts in the user session metadata (`metadatas`) and create `source_elements` using `cl.Text()`. 
@@ -2181,7 +2183,7 @@ Before running any script in the `src` folder, make sure to customize the value 
 prefix="Blue"
 acrName="${prefix}Registry"
 acrResourceGrougName="${prefix}RG"
-location="northeurope"
+location="EastUS"
 
 # Python Files
 docAppFile="doc.py"
@@ -2198,14 +2200,14 @@ images=($docImageName $chatImageName)
 filenames=($docAppFile $chatAppFile)
 ```
 
-The `Dockerfile` under the `src` folder is parametric and can be used to build the container images for both the chat applications.
+The `Dockerfile` under the `src` folder is parametric and can be used to build the container images for both chat applications.
 
 ```dockerfile
 # app/Dockerfile
 
 # # Stage 1 - Install build dependencies
 
-# A Dockerfile must start with a FROM instruction which sets the base image for the container.
+# A Dockerfile must start with a FROM instruction that sets the base image for the container.
 # The Python images come in many flavors, each designed for a specific use case.
 # The python:3.11-slim image is a good base image for most applications.
 # It is a minimal image built on top of Debian Linux and includes only the necessary packages to run Python.
@@ -2374,7 +2376,7 @@ source ./00-variables.sh
 # Login to ACR
 az acr login --name $acrName 
 
-# Retrieve ACR login server. Each container image needs to be tagged with the loginServer name of the registry. 
+# Retrieve the ACR login server. Each container image needs to be tagged with the login server of the registry. 
 loginServer=$(az acr show --name $acrName --query loginServer --output tsv)
 
 # Use a for loop to tag and push the local docker images to the Azure Container Registry

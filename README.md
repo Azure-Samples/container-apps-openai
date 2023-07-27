@@ -17,12 +17,12 @@ products:
 - azure-virtual-network
 - azure-monitor
 - azure-log-analytics
-name:  Deploy Azure Container Apps that use OpenAI, LangChain, ChromaDB, and Chainlit using Terraform
+name:  Deploy an OpenAI, LangChain, ChromaDB, and Chainlit chat app in Azure Container Apps using Terraform
 description: This sample shows how to create two Azure Container Apps that use OpenAI, LangChain, ChromaDB, and Chainlit using Terraform.
 urlFragment: container-apps-openai
 ---
 
-# Deploy Azure Container Apps that use OpenAI, LangChain, ChromaDB, and Chainlit using Terraform
+# Deploy an OpenAI, LangChain, ChromaDB, and Chainlit chat app in Azure Container Apps using Terraform
 
 In this sample, I demonstrate how to quickly build chat applications using [Python](https://www.python.org/) and leveraging powerful technologies such as [OpenAI ChatGPT models](https://platform.openai.com/docs/guides/gpt), [Embedding models](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#embeddings-models), [LangChain](https://python.langchain.com/docs/get_started/introduction.html) framework, [ChromaDB](https://docs.trychroma.com/) vector database, and [Chainlit](https://docs.chainlit.io/overview), an open-source Python package that is specifically designed to create user interfaces (UIs) for AI applications. These applications are hosted on [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview), a fully managed environment that enables you to run microservices and containerized applications on a serverless platform.
 
@@ -992,14 +992,14 @@ The following picture shows what happens when a user submits a new message in th
 
 Chainlit can render messages in markdown format and provides classes to support the following elements:
 
-- [Audio](https://docs.chainlit.io/api-reference/elements/audio): the `Audio` class allows you to display an audio player for a specific audio file in the chatbot user interface. You must provide either an url or a path or content bytes.
-- [Avatar](https://docs.chainlit.io/api-reference/elements/avatar): the `Avatar` class allows you to display an avatar image next to a message instead of the author name. You need to send the element once. Next if the name of an avatar matches the name of an author, the avatar will be automatically displayed. You must provide either an url or a path or content bytes.
-- [File](https://docs.chainlit.io/api-reference/elements/file): the `File` class allows you to display a button that lets users download the content of the file. You must provide either an url or a path or content bytes.
-- [Image](https://docs.chainlit.io/api-reference/elements/image): the `Image` class is designed to create and handle image elements to be sent and displayed in the chatbot user interface. You must provide either an url or a path or content bytes.
+- [Audio](https://docs.chainlit.io/api-reference/elements/audio): the `Audio` class allows you to display an audio player for a specific audio file in the chatbot user interface. You must provide either a URL or a path or content bytes.
+- [Avatar](https://docs.chainlit.io/api-reference/elements/avatar): the `Avatar` class allows you to display an avatar image next to a message instead of the author name. You need to send the element once. Next if the name of an avatar matches the name of an author, the avatar will be automatically displayed. You must provide either a URL or a path or content bytes.
+- [File](https://docs.chainlit.io/api-reference/elements/file): the `File` class allows you to display a button that lets users download the content of the file. You must provide either a URL or a path or content bytes.
+- [Image](https://docs.chainlit.io/api-reference/elements/image): the `Image` class is designed to create and handle image elements to be sent and displayed in the chatbot user interface. You must provide either a URL or a path or content bytes.
 - [Pdf](https://docs.chainlit.io/api-reference/elements/pdf): the `Pdf` class allows you to display a PDF hosted remotely or locally in the chatbot UI. This class either takes a URL of a PDF hosted online, or the path of a local PDF.
 - [Pyplot](https://docs.chainlit.io/api-reference/elements/pyplot): the `Pyplot` class allows you to display a [Matplotlib](https://matplotlib.org/) pyplot chart in the chatbot UI. This class takes a pyplot figure.
 - [TaskList](https://docs.chainlit.io/api-reference/elements/tasklist): the `TaskList` class allows you to display a task list next to the chatbot UI.
-- [Text](https://docs.chainlit.io/api-reference/elements/text): the `Text` class allows you to display a text element in the chatbot UI. This class takes a string and creates a text element that can be sent to the UI. It supports the markdown syntax for formatting text. You must provide either an url or a path or content bytes.
+- [Text](https://docs.chainlit.io/api-reference/elements/text): the `Text` class allows you to display a text element in the chatbot UI. This class takes a string and creates a text element that can be sent to the UI. It supports the markdown syntax for formatting text. You must provide either a URL or a path or content bytes.
 
 Chainlit provides three [display options](https://docs.chainlit.io/concepts/elements#display-options) that determine how an element is rendered in the context where it is being used. The ElementDisplay type represents these options. The following display options are available:
 
@@ -1039,8 +1039,8 @@ These are the libraries used by the chat application:
 5. `random`: this module provides functions to generate random numbers.
 6. `logging`: this module provides flexible logging of messages.
 7. `chainlit as cl`: This imports the [Chainlit](https://docs.chainlit.io/overview) library and aliases it as `cl`. Chainlit is used to create the UI of the application.
-8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad`, a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0(https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity which client id is defined in the `AZURE_CLIENT_ID` environment variable.
-9. `load_dotenv` and `dotenv_values` from `dotenv`: [Python-dotenv](https://github.com/theskumar/python-dotenv) reads key-value pairs from a `.env`` file and can set them as environment variables. It helps in the development of applications following the [12-factor](http://12factor.net/) principles.
+8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad`, a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0(https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity, whose client ID is defined in the `AZURE_CLIENT_ID` environment variable.
+9. `load_dotenv` and `dotenv_values` from `dotenv`: [Python-dotenv](https://github.com/theskumar/python-dotenv) reads key-value pairs from a `.env` file and can set them as environment variables. It helps in the development of applications following the [12-factor](http://12factor.net/) principles.
 
 The `requirements.txt` file under the `src` folder contains the list of packages used by the chat applications. You can restore these packages in your environment using the following command:
 
@@ -1109,11 +1109,6 @@ Here's a brief explanation:
   
 3. `logger`: This creates a logger instance named after the current module (`__name__`). The logger will be used to log messages throughout the code.
 
-```python
-def backoff(attempt: int) -> float:
-    return backoff_in_seconds * 2 ** attempt + random.uniform(0, 1)
-```
-
 Next, the code defines a helper function `backoff` that takes an integer `attempt` and returns a float value representing the backoff time for exponential retries in case of API call failures.
 
 ```python
@@ -1138,7 +1133,7 @@ The function follows these steps:
 1. It fetches the current token from `cl.user_session` (which seems to be a part of the `chainlit` library) using the key `'openai_token'`. The [user_session](https://docs.chainlit.io/concepts/user-session) is a dictionary that stores the user’s session data. The id and env keys are reserved for the session ID and environment variables, respectively. Other keys can be used to store arbitrary data in the user’s session.
 2. It checks if the token is `None` or if its expiration time (`expires_on`) is less than the current time minus 1800 seconds (30 minutes).
 
-Next, the code defines a function called `start_chat` that is used to initialize the when the user connects to the application or click the `New Chat` button.
+Next, the code defines a function called `start_chat` that is used to initialize the when the user connects to the application or clicks the `New Chat` button.
 
 ```python
 @cl.on_chat_start
@@ -1165,7 +1160,7 @@ async def start_chat():
 Here is a brief explanation of the function steps:
 
 - `@cl.on_chat_start`: The [on_chat_start](https://docs.chainlit.io/api-reference/on-chat-start) decorator registers a callback function `start_chat()` to be called when the Chainlit chat starts. It is used to set up the chat and send [avatars](https://docs.chainlit.io/api-reference/elements/avatar) for the Chatbot, Error, and User participants in the chat.
-- `cl.Avatar()`: the [Avatar](https://docs.chainlit.io/api-reference/elements/avatar) class allows you to display an avatar image next to a message instead of the author name. You need to send the element once. Next if the name of an avatar matches the name of an author, the avatar will be automatically displayed. You must provide either an url or a path or content bytes.
+- `cl.Avatar()`: the [Avatar](https://docs.chainlit.io/api-reference/elements/avatar) class allows you to display an avatar image next to a message instead of the author name. You need to send the element once. Next if the name of an avatar matches the name of an author, the avatar will be automatically displayed. You must provide either a URL or a path or content bytes.
 - `cl.user_session.set()`: This API call sets a value in the [user_session](https://docs.chainlit.io/concepts/user-session) dictionary. In this case, it initializes the `message_history` in the user's session with a system content message, which indicates the start of the chat.
 
 Finally, the application defines the method called whenever the user sends a new message in the chat.
@@ -1214,7 +1209,7 @@ Here is a detailed explanation of the function steps:
 - `await openai.ChatCompletion.acreate()`: This API call sends a message to the [OpenAI Chat API](https://platform.openai.com/docs/api-reference/chat/create) in an asynchronous mode and streams the response. It uses the provided `message_history` as context for generating the assistant's response.
 - The section also includes an exception handling block that retries the OpenAI API call in case of specific errors like timeouts, API errors, connection errors, invalid requests, service unavailability, and other non-retriable errors. You can replace this code with a general-purpose retrying library for Python like [Tenacity](https://tenacity.readthedocs.io/en/latest/).
 
-Below you can read the full code of the application.
+Below, you can read the complete code of the application.
 
 ```python
 # Import packages
@@ -1431,8 +1426,8 @@ These are the libraries used by the chat application:
 5. `random`: this module provides functions to generate random numbers.
 6. `logging`: this module provides flexible logging of messages.
 7. `chainlit as cl`: This imports the [Chainlit](https://docs.chainlit.io/overview) library and aliases it as `cl`. Chainlit is used to create the UI of the application.
-8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad`, a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0(https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity which client id is defined in the `AZURE_CLIENT_ID` environment variable.
-9. `load_dotenv` and `dotenv_values` from `dotenv`: [Python-dotenv](https://github.com/theskumar/python-dotenv) reads key-value pairs from a `.env`` file and can set them as environment variables. It helps in the development of applications following the [12-factor](http://12factor.net/) principles.
+8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad`, a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity, whose client ID is defined in the `AZURE_CLIENT_ID` environment variable.
+9. `load_dotenv` and `dotenv_values` from `dotenv`: [Python-dotenv](https://github.com/theskumar/python-dotenv) reads key-value pairs from a `.env` file and can set them as environment variables. It helps in the development of applications following the [12-factor](http://12factor.net/) principles.
 10. `langchain`: Large language models (LLMs) are emerging as a transformative technology, enabling developers to build applications that they previously could not. However, using these LLMs in isolation is often insufficient for creating a truly powerful app - the real power comes when you can combine them with other sources of computation or knowledge. [LangChain](hhttps://pypi.org/project/langchain/) library aims to assist in the development of those types of applications.
 
 The `requirements.txt` file under the `src` folder contains the list of packages used by the chat applications. You can restore these packages in your environment using the following command:
@@ -1501,9 +1496,9 @@ Here's a brief explanation of each variable and related environment variable:
 4. `api_type`: A string representing the type of the OpenAI API.
 5. `api_version`: A string representing the version of the OpenAI API.
 6. `chat_completion_deployment`: the name of Azure OpenAI GPT model for chat completion.
-7. `embeddings_deployment`: the name of the Azure OpenAI demployment for embeddings.
-8. `model`: The model used for chat completions calls (e.g, `gpt-35-turbo-16k`).
-9. `max_size_mb`: the max size for the uploaded documents.
+7. `embeddings_deployment`: the name of the Azure OpenAI deployment for embeddings.
+8. `model`: The model used for chat completion calls (e.g, `gpt-35-turbo-16k`).
+9. `max_size_mb`: the maximum size for the uploaded documents.
 10. `max_files`: the maximum number of documents that can be uploaded.
 11. `text_splitter_chunk_size`: the maximum chunk size used by the `RecursiveCharacterTextSplitter` object.
 12. `text_splitter_chunk_overlap`: the maximum chunk overlap used by the `RecursiveCharacterTextSplitter` object.
@@ -1538,11 +1533,6 @@ Here's a brief explanation:
   
 3. `logger`: This creates a logger instance named after the current module (`__name__`). The logger will be used to log messages throughout the code.
 
-```python
-def backoff(attempt: int) -> float:
-    return backoff_in_seconds * 2 ** attempt + random.uniform(0, 1)
-```
-
 Next, the code defines a helper function `backoff` that takes an integer `attempt` and returns a float value representing the backoff time for exponential retries in case of API call failures.
 
 ```python
@@ -1567,7 +1557,7 @@ The function follows these steps:
 1. It fetches the current token from `cl.user_session` (which seems to be a part of the `chainlit` library) using the key `'openai_token'`. The [user_session](https://docs.chainlit.io/concepts/user-session) is a dictionary that stores the user’s session data. The id and env keys are reserved for the session ID and environment variables, respectively. Other keys can be used to store arbitrary data in the user’s session.
 2. It checks if the token is `None` or if its expiration time (`expires_on`) is less than the current time minus 1800 seconds (30 minutes).
 
-Next, the code defines a function called `start_chat` that is used to initialize the when the user connects to the application or click the `New Chat` button.
+Next, the code defines a function called `start_chat` that is used to initialize the when the user connects to the application or clicks the `New Chat` button.
 
 ```python
 @cl.on_chat_start
@@ -1590,7 +1580,7 @@ async def start_chat():
 Here is a brief explanation of the function steps:
 
 - `@cl.on_chat_start`: The [on_chat_start](https://docs.chainlit.io/api-reference/on-chat-start) decorator registers a callback function `start_chat()` to be called when the Chainlit chat starts. It is used to set up the chat and send [avatars](https://docs.chainlit.io/api-reference/elements/avatar) for the Chatbot, Error, and User participants in the chat.
-- `cl.Avatar()`: the [Avatar](https://docs.chainlit.io/api-reference/elements/avatar) class allows you to display an avatar image next to a message instead of the author name. You need to send the element once. Next if the name of an avatar matches the name of an author, the avatar will be automatically displayed. You must provide either an url or a path or content bytes.
+- `cl.Avatar()`: the [Avatar](https://docs.chainlit.io/api-reference/elements/avatar) class allows you to display an avatar image next to a message instead of the author name. You need to send the element once. Next if the name of an avatar matches the name of an author, the avatar will be automatically displayed. You must provide either a URL or a path or content bytes.
 
 The following code is used to initialize the large language model (LLM) chain used to reply questions on the content of the uploaded documents. 
 
@@ -1675,7 +1665,7 @@ The next piece of code performs the following steps:
 1. It creates an [OpenAIEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.openai.OpenAIEmbeddings.html#langchain.embeddings.openai.OpenAIEmbeddings) configured to use the embeddings model in the Azure OpenAI Service to create embeddings from text chunks.
 2. It creates a [ChromaDB](https://docs.trychroma.com/) vector database using the `OpenAIEmbeddings` object, the text chuncks list, and metadata list.
 3. It creates an [AzureChatOpenAI](https://api.python.langchain.com/en/latest/chat_models/langchain.chat_models.azure_openai.AzureChatOpenAI.html?highlight=azurechatopenai#langchain.chat_models.azure_openai.AzureChatOpenAI) LangChain object based on the GPR model hosted in Azure OpenAI Service. 
-4. It creates a chain using the [RetrievalQAWithSourcesChain.from_chain_type](https://api.python.langchain.com/en/latest/chains/langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.html?highlight=retrievalqawithsourceschain%20from_chain_type#langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.from_chain_type) API call, which uses the previously created models and stores as retrievers.
+4. It creates a chain using the [RetrievalQAWithSourcesChain.from_chain_type](https://api.python.langchain.com/en/latest/chains/langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.html?highlight=retrievalqawithsourceschain%20from_chain_type#langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.from_chain_type) API call uses previously created models and stores them as retrievers.
 5. It stores the metadata and text chunks in the user session using the `cl.user_session.set()` API call.
 6. It creates a message to inform the user that the files are ready for queries, and finally returns the `chain`.
 7. The `cl.user_session.set("chain", chain)` call stores the LLM chain in the [user_session](https://docs.chainlit.io/concepts/user-session) dictionary for later use.
@@ -1839,7 +1829,7 @@ The code below extracts the answer and sources from the API response and formats
     await cl.Message(content=answer, elements=source_elements).send()
 ```
 
-Below you can read the full code of the application.
+Below, you can read the complete code of the application.
 
 ```python
 # Import packages
@@ -2429,7 +2419,7 @@ Get-AzResource -ResourceGroupName <resource-group-name>
 
 ## Clean up resources
 
-When you no longer need the resources you created, you can just delete the resource group using the following Azure CLI command. This will remove all the Azure resources.
+You can delete the resource group using the following Azure CLI command when you no longer need the resources you created. This will remove all the Azure resources.
 
 ```azurecli
 az group delete --name <resource-group-name>

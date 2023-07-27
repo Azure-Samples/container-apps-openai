@@ -17,12 +17,12 @@ products:
 - azure-virtual-network
 - azure-monitor
 - azure-log-analytics
-name:  Deploy an OpenAI, LangChain, ChromaDB, and Chainlit chat app in Azure Container Apps using Terraform
+name:  Deploy an OpenAI, LangChain, ChromaDB, and Chainlit Chat App in Azure Container Apps using Terraform
 description: This sample shows how to create two Azure Container Apps that use OpenAI, LangChain, ChromaDB, and Chainlit using Terraform.
 urlFragment: container-apps-openai
 ---
 
-# Deploy an OpenAI, LangChain, ChromaDB, and Chainlit chat app in Azure Container Apps using Terraform
+# Deploy an OpenAI, LangChain, ChromaDB, and Chainlit Chat App in Azure Container Apps using Terraform
 
 In this sample, I demonstrate how to quickly build chat applications using [Python](https://www.python.org/) and leveraging powerful technologies such as [OpenAI ChatGPT models](https://platform.openai.com/docs/guides/gpt), [Embedding models](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#embeddings-models), [LangChain](https://python.langchain.com/docs/get_started/introduction.html) framework, [ChromaDB](https://docs.trychroma.com/) vector database, and [Chainlit](https://docs.chainlit.io/overview), an open-source Python package that is specifically designed to create user interfaces (UIs) for AI applications. These applications are hosted on [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/overview), a fully managed environment that enables you to run microservices and containerized applications on a serverless platform.
 

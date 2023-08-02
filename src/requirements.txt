@@ -25,7 +25,7 @@ click==8.1.6
 clickhouse-connect==0.5.24
 cmake==3.26.3
 coloredlogs==15.0.1
-cryptography==40.0.2
+cryptography==41.0.3
 dataclasses-json==0.5.7
 debugpy==1.6.7
 decorator==5.1.1

@@ -179,7 +179,7 @@ typing_extensions==4.5.0
 tzdata==2023.3
 tzlocal==5.0.1
 uptrace==1.18.0
-urllib3==1.26.7
+urllib3==1.26.17
 uvicorn==0.22.0
 uvloop==0.17.0
 validators==0.20.0

@@ -24,11 +24,13 @@ output "endpoint" {
 }
 
 output "primary_access_key" {
-  value = azurerm_cognitive_account.openai.endpoint
+  value = azurerm_cognitive_account.openai.primary_access_key
+  sensitive = true
   description = "Specifies the primary access key of the Azure OpenAI Service."
 }
 
 output "secondary_access_key" {
-  value = azurerm_cognitive_account.openai.endpoint
+  value = azurerm_cognitive_account.openai.secondary_access_key
+  sensitive = true
   description = "Specifies the secondary access key of the Azure OpenAI Service."
 }

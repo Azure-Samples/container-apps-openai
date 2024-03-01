@@ -990,7 +990,11 @@ The following picture shows what happens when a user submits a new message in th
 
 ![Chainlit Simple Chat](/images/chainlit-simple-chat.png)
 
-Chainlit can render messages in markdown format and provides classes to support the following elements:
+Chainlit can render messages in markdown format as shown by the following prompt: 
+
+![Chainlit Markdown Support](/images/chainlit-markdown-format-result.png)
+
+Chainlit also provides classes to support the following elements:
 
 - [Audio](https://docs.chainlit.io/api-reference/elements/audio): The `Audio` class allows you to display an audio player for a specific audio file in the chatbot user interface. You must provide either a URL or a path or content bytes.
 - [Avatar](https://docs.chainlit.io/api-reference/elements/avatar): The `Avatar` class allows you to display an avatar image next to a message instead of the author's name. You need to send the element once. Next,, if an avatar's name matches an author's name, the avatar will be automatically displayed. You must provide either a URL or a path or content bytes.
@@ -1001,13 +1005,9 @@ Chainlit can render messages in markdown format and provides classes to support 
 - [TaskList](https://docs.chainlit.io/api-reference/elements/tasklist): The `TaskList` class allows you to display a task list next to the chatbot UI.
 - [Text](https://docs.chainlit.io/api-reference/elements/text): The `Text` class allows you to display a text element in the chatbot UI. This class takes a string and creates a text element that can be sent to the UI. It supports the markdown syntax for formatting text. You must provide either a URL or a path or content bytes.
 
-Chainlit provides three [display options](https://docs.chainlit.io/concepts/elements#display-options) that determine how an element is rendered in the context of its use. The ElementDisplay type represents these options. The following display options are available:
-
-- `Side`: this option displays the element on a sidebar. The sidebar is hidden by default and opened upon element reference click.
-- `Page`: this option displays the element on a separate page. The user is redirected to the page upon an element reference click.
-- `Inline`: this option displays the element below the message. If the element is [global](https://docs.chainlit.io/concepts/elements#global-elements), it is displayed if it is explicitly mentioned in the message. If the element is [scoped](https://docs.chainlit.io/concepts/elements#scoped-elements), it is displayed regardless of whether it is expressly mentioned in the message.
-
 You can click the user icon on the UI to access the chat settings and choose, for example, between the light and dark theme.
+
+![Chainlit Dark Mode](/images/chainlit-dark-mode.png)
 
 The application is built in Python. Let's take a look at the individual parts of the application code. In the following section, the Python code starts by importing the necessary packages/modules.
 
@@ -1015,12 +1015,10 @@ The application is built in Python. Let's take a look at the individual parts of
 # Import packages
 import os
 import sys
-import time
-import openai
-import random
+from openai import AsyncAzureOpenAI
 import logging
 import chainlit as cl
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from dotenv import load_dotenv
 from dotenv import dotenv_values
 
@@ -1034,12 +1032,10 @@ These are the libraries used by the chat application:
 
 1. `os`: This module provides a way of interacting with the operating system, enabling the code to access environment variables, file paths, etc.
 2. `sys`: This module provides access to some variables used or maintained by the interpreter and functions that interact with the interpreter.
-3. `time`: This module provides various time-related time manipulation and measurement functions.
 4. `openai`: The OpenAI Python library provides convenient access to the OpenAI API from applications written in Python. It includes a pre-defined set of classes for API resources that initialize themselves dynamically from API responses which makes it compatible with a wide range of versions of the OpenAI API. You can find usage examples for the OpenAI Python library in our [API reference](https://beta.openai.com/docs/api-reference?lang=python) and the [OpenAI Cookbook](https://github.com/openai/openai-cookbook/).
-5. `random`: This module provides functions to generate random numbers.
 6. `logging`: This module provides flexible logging of messages.
 7. `chainlit as cl`: This imports the [Chainlit](https://docs.chainlit.io/overview) library and aliases it as `cl`. Chainlit is used to create the UI of the application.
-8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad,` a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0(https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity, whose client ID is defined in the `AZURE_CLIENT_ID` environment variable.
+8. `from azure.identity import DefaultAzureCredential, get_bearer_token_provider`: when the `openai_type` property value is `azure_ad,` a `DefaultAzureCredential` object from the [Azure Identity client library for Python](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Microsoft Entra ID using the credentials of the user-defined managed identity federated with the service account.
 9. `load_dotenv` and `dotenv_values` from `dotenv`: [Python-dotenv](https://github.com/theskumar/python-dotenv) reads key-value pairs from a `.env` file and can set them as environment variables. It helps in the development of applications following the [12-factor](http://12factor.net/) principles.
 
 The `requirements.txt` file under the `src` folder contains the list of packages used by the chat applications. You can restore these packages in your environment using the following command:
@@ -1048,7 +1044,7 @@ The `requirements.txt` file under the `src` folder contains the list of packages
 pip install -r requirements.txt --upgrade
 ```
 
-Next, the code reads environment variables and configures the OpenAI settings.
+Next, the code reads the value of the environment variables used to initialize Azure OpenAI objects. In addition, it creates a token provider for Azure OpenAI.
 
 ```python
 # Read environment variables
@@ -1056,105 +1052,87 @@ temperature = float(os.environ.get("TEMPERATURE", 0.9))
 api_base = os.getenv("AZURE_OPENAI_BASE")
 api_key = os.getenv("AZURE_OPENAI_KEY")
 api_type = os.environ.get("AZURE_OPENAI_TYPE", "azure")
-api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-06-01-preview")
+api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-12-01-preview")
 engine = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 model = os.getenv("AZURE_OPENAI_MODEL")
-system_content = os.getenv("AZURE_OPENAI_SYSTEM_MESSAGE", "You are a helpful assistant.")
+system_content = os.getenv(
+    "AZURE_OPENAI_SYSTEM_MESSAGE", "You are a helpful assistant."
+)
 max_retries = int(os.getenv("MAX_RETRIES", 5))
-backoff_in_seconds = float(os.getenv("BACKOFF_IN_SECONDS", 1))
+timeout = int(os.getenv("TIMEOUT", 30))
+debug = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
-# Configure OpenAI
-openai.api_type = api_type
-openai.api_version = api_version
-openai.api_base = api_base
-openai.api_key = api_key
+# Create Token Provider
+token_provider = get_bearer_token_provider(
+    DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+)
 ```
 
 Here's a brief explanation of each variable and related environment variable:
 
 1. `temperature`: A float value representing the temperature for [Create chat completion](https://platform.openai.com/docs/api-reference/chat/create) method of the OpenAI API. It is fetched from the environment variables with a default value of 0.9.
 2. `api_base`: The base URL for the OpenAI API.
-3. `api_key`: The API key for the OpenAI API.
+3. `api_key`: The API key for the OpenAI API. The value of this variable can be null when using a user-assigned managed identity to acquire a security token to access Azure OpenAI.
 4. `api_type`: A string representing the type of the OpenAI API.
 5. `api_version`: A string representing the version of the OpenAI API.
 6. `engine`: The engine used for OpenAI API calls.
 7. `model`: The model used for OpenAI API calls.
 8. `system_content`: The content of the system message used for OpenAI API calls.
 9. `max_retries`: The maximum number of retries for OpenAI API calls.
-10. `backoff_in_seconds`: The backoff time in seconds for retries in case of failures.
+10. `timeout`: The timeout in seconds.
+11. `debug`: When debug is equal to `true`, `t`, or `1`, the logger writes the chat completion answers.
 
-In the next section, the code sets the default Azure credential based on the `api_type` and configures a logger for logging purposes. 
+In the next section, the code creates the `AsyncAzureOpenAI` client object used by the application to communicate with the Azure OpenAI Service instance. When the `api_type` is equal to `azure`, the code initializes the object with the API key. Otherwise, it initializes the `azure_ad_token_provider` property to the token provider created earlier. Then the code creates a logger.
 
 ```python
-# Set default Azure credential
-default_credential = DefaultAzureCredential() if openai.api_type == "azure_ad" else None
+# Configure OpenAI
+if api_type == "azure":
+    openai = AsyncAzureOpenAI(
+        api_version=api_version,
+        api_key=api_key,
+        azure_endpoint=api_base,
+        max_retries=max_retries,
+        timeout=timeout,
+    )
+else:
+    openai = AsyncAzureOpenAI(
+        api_version=api_version,
+        azure_endpoint=api_base,
+        azure_ad_token_provider=token_provider,
+        max_retries=max_retries,
+        timeout=timeout
+    )
 
 # Configure a logger
 logging.basicConfig(
     stream=sys.stdout,
-    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 ```
 
-Here's a brief explanation:
-
-1. `default_credential`: It sets the default Azure credential to `DefaultAzureCredential()` if the `api_type` is "azure_ad"; otherwise, it is set to `None`.
-2. `logging.basicConfig()`: This function configures the logging system with specific settings.
-
-    - `stream`: The output stream where log messages will be written. Here, it is set to `sys.stdout` for writing log messages to the standard output.
-    - `format`: The format string for log messages. It includes the timestamp, filename, line number, log level, and the actual log message.
-    - `level`: The logging level. It is set to `logging.INFO`, meaning only messages with the level `INFO` and above will be logged.
-  
-3. `logger`: This creates a logger instance named after the current module (`__name__`). The logger will be used to log messages throughout the code.
-
-Next, the code defines a helper function `backoff` that takes an integer `attempt` and returns a float value representing the backoff time for exponential retries in case of API call failures.
-
-```python
-def backoff(attempt: int) -> float:
-    return backoff_in_seconds * 2 ** attempt + random.uniform(0, 1)
-```
-
 The backoff time is calculated using the `backoff_in_seconds` and `attempt` variables. It follows the formula `backoff_in_seconds * 2 ** attempt + random.uniform(0, 1)`. This formula increases the backoff time exponentially with each attempt and adds a random value between 0 and 1 to avoid synchronized retries.
 
-Then the application defines a function called `refresh_openai_token()` to refresh the OpenAI security token if needed.
-
-```python
-def refresh_openai_token():
-    token = cl.user_session.get('openai_token')
-    if token is None or token.expires_on < int(time.time()) - 1800:
-        cl.user_session.set('openai_token', default_credential.get_token("https://cognitiveservices.azure.com/.default"))
-        openai.api_key = cl.user_session.get('openai_token').token
-```
-
-The function follows these steps:
-
-1. It fetches the current token from `cl.user_session` (which seems to be a part of the `chainlit` library) using the key `'openai_token'`. The [user_session](https://docs.chainlit.io/concepts/user-session) is a dictionary that stores the user’s session data. The id and env keys are reserved for the session ID and environment variables, respectively. Other keys can be used to store arbitrary data in the user’s session.
-2. It checks if the token is `None` or if its expiration time (`expires_on`) is less than the current time minus 1800 seconds (30 minutes).
-
-Next, the code defines a function called `start_chat` that is used to initialize the when the user connects to the application or clicks the `New Chat` button.
+Next, the code defines a function called `start_chat` that is used to initialize the UI when the user connects to the application or clicks the `New Chat` button.
 
 ```python
 @cl.on_chat_start
 async def start_chat():
-    # Sending Avatars for Chat Participants
     await cl.Avatar(
-        name="Chatbot",
-        url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
+        name="Chatbot", url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
     ).send()
     await cl.Avatar(
-        name="Error",
-        url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
+        name="Error", url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
     ).send()
     await cl.Avatar(
-        name="User",
-        url="https://media.architecturaldigest.com/photos/5f241de2c850b2a36b415024/master/w_1600%2Cc_limit/Luke-logo.png"
+        name="You",
+        url="https://media.architecturaldigest.com/photos/5f241de2c850b2a36b415024/master/w_1600%2Cc_limit/Luke-logo.png",
     ).send()
-
-    # Initializing message_history in user session
-    system_content = "Welcome to the chat!"
-    cl.user_session.set("message_history", [{"role": "system", "content": system_content}])
+    cl.user_session.set(
+        "message_history",
+        [{"role": "system", "content": system_content}],
+    )
 ```
 
 Here is a brief explanation of the function steps:
@@ -1167,36 +1145,29 @@ Finally, the application defines the method called whenever the user sends a new
 
 ```python
 @cl.on_message
-async def main(message: str):
-    # Fetching message history from user session
+async def on_message(message: cl.Message):
     message_history = cl.user_session.get("message_history")
+    message_history.append({"role": "user", "content": message.content})
+    logger.info("Question: [%s]", message.content)
 
-    # Appending user's message to message history
-    message_history.append({"role": "user", "content": message})
-
-    # Creating an empty Chainlit response message
+    # Create the Chainlit response message
     msg = cl.Message(content="")
 
-    # Retry the OpenAI API call if it fails
-    for attempt in range(max_retries):
-        try:
-            # Refresh the OpenAI security token if using Azure AD
-            if openai.api_type == "azure_ad":
-                refresh_openai_token()
+    async for stream_resp in await openai.chat.completions.create(
+        model=model,
+        messages=message_history,
+        temperature=temperature,
+        stream=True,
+    ):
+        if stream_resp and len(stream_resp.choices) > 0:
+            token = stream_resp.choices[0].delta.content or ""
+            await msg.stream_token(token)
 
-            # Sending the message to OpenAI and streaming the response
-            async for stream_resp in await openai.ChatCompletion.acreate(
-                engine=engine,
-                model=model,
-                messages=message_history,
-                temperature=temperature,
-                stream=True
-            ):
-                if stream_resp and len(stream_resp.choices) > 0:
-                    token = stream_resp.choices[0]["delta"].get("content", "")
-                    await msg.stream_token(token)
-            break
-        # Exception handling for different types of errors during the API call (Timeout, APIError, APIConnectionError, InvalidRequestError, ServiceUnavailableError, and other non-retriable errors)
+    if debug:
+        logger.info("Answer: [%s]", msg.content)
+
+    message_history.append({"role": "assistant", "content": msg.content})
+    await msg.send()
 ```
 
 Here is a detailed explanation of the function steps:
@@ -1206,8 +1177,7 @@ Here is a detailed explanation of the function steps:
 - `message_history.append()`: This API call appends a new message to the `message_history` list. It is used to add the user's message and the assistant's response to the chat history.
 - `cl.Message()`: This API call creates a Chainlit [Message](https://docs.chainlit.io/api-reference/message#update-a-message) object. The `Message` class is designed to send, stream, edit, or remove messages in the chatbot user interface. In this sample, the `Message` object is used to stream the OpenAI response in the chat.
 - `msg.stream_token()`: The [stream_token](https://docs.chainlit.io/concepts/streaming/python) method of the [Message](https://docs.chainlit.io/api-reference/message#update-a-message) class streams a token to the response message. It is used to send the response from the OpenAI Chat API in chunks to ensure real-time streaming in the chat.
-- `await openai.ChatCompletion.acreate()`: This API call sends a message to the [OpenAI Chat API](https://platform.openai.com/docs/api-reference/chat/create) in an asynchronous mode and streams the response. It uses the provided `message_history` as context for generating the assistant's response.
-- The section also includes an exception handling block that retries the OpenAI API call in case of specific errors like timeouts, API errors, connection errors, invalid requests, service unavailability, and other non-retriable errors. You can replace this code with a general-purpose retrying library for Python like [Tenacity](https://tenacity.readthedocs.io/en/latest/).
+- `await openai.chat.completions.create()`: This API call sends a message to the [OpenAI Chat API](https://platform.openai.com/docs/api-reference/chat/create) in an asynchronous mode and streams the response. It uses the provided `message_history` as context for generating the assistant's response.
 
 Below, you can read the complete code of the application.
 
@@ -1215,18 +1185,16 @@ Below, you can read the complete code of the application.
 # Import packages
 import os
 import sys
-import time
-import openai
-import random
+from openai import AsyncAzureOpenAI
 import logging
 import chainlit as cl
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from dotenv import load_dotenv
 from dotenv import dotenv_values
 
 # Load environment variables from .env file
 if os.path.exists(".env"):
-    load_dotenv(override = True)
+    load_dotenv(override=True)
     config = dotenv_values(".env")
 
 # Read environment variables
@@ -1234,115 +1202,87 @@ temperature = float(os.environ.get("TEMPERATURE", 0.9))
 api_base = os.getenv("AZURE_OPENAI_BASE")
 api_key = os.getenv("AZURE_OPENAI_KEY")
 api_type = os.environ.get("AZURE_OPENAI_TYPE", "azure")
-api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-06-01-preview")
+api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-12-01-preview")
 engine = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 model = os.getenv("AZURE_OPENAI_MODEL")
-system_content = os.getenv("AZURE_OPENAI_SYSTEM_MESSAGE", "You are a helpful assistant.")
+system_content = os.getenv(
+    "AZURE_OPENAI_SYSTEM_MESSAGE", "You are a helpful assistant."
+)
 max_retries = int(os.getenv("MAX_RETRIES", 5))
-backoff_in_seconds = float(os.getenv("BACKOFF_IN_SECONDS", 1))
-token_refresh_interval = int(os.getenv("TOKEN_REFRESH_INTERVAL", 1800))
+timeout = int(os.getenv("TIMEOUT", 30))
+debug = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
+
+# Create Token Provider
+token_provider = get_bearer_token_provider(
+    DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+)
 
 # Configure OpenAI
-openai.api_type = api_type
-openai.api_version = api_version
-openai.api_base = api_base
-openai.api_key = api_key
-
-# Set default Azure credential
-default_credential = DefaultAzureCredential(
-) if openai.api_type ==  "azure_ad" else None
+if api_type == "azure":
+    openai = AsyncAzureOpenAI(
+        api_version=api_version,
+        api_key=api_key,
+        azure_endpoint=api_base,
+        max_retries=max_retries,
+        timeout=timeout,
+    )
+else:
+    openai = AsyncAzureOpenAI(
+        api_version=api_version,
+        azure_endpoint=api_base,
+        azure_ad_token_provider=token_provider,
+        max_retries=max_retries,
+        timeout=timeout,
+    )
 
 # Configure a logger
-logging.basicConfig(stream = sys.stdout,
-                    format = '[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
-                    level = logging.INFO)
+logging.basicConfig(
+    stream=sys.stdout,
+    format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger(__name__)
 
-def backoff(attempt : int) -> float:
-    return backoff_in_seconds * 2**attempt + random.uniform(0, 1)
-
-# Refresh the OpenAI security token every 45 minutes
-def refresh_openai_token():
-    token = cl.user_session.get('openai_token')
-    if token ==  None or token.expires_on < int(time.time()) - token_refresh_interval:
-        cl.user_session.set('openai_token', default_credential.get_token(
-            "https://cognitiveservices.azure.com/.default"))
-        openai.api_key = cl.user_session.get('openai_token').token
 
 @cl.on_chat_start
 async def start_chat():
     await cl.Avatar(
-        name = "Chatbot",
-        url = "https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
+        name="Chatbot", url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
     ).send()
     await cl.Avatar(
-        name = "Error",
-        url = "https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
+        name="Error", url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
     ).send()
     await cl.Avatar(
-        name = "User",
-        url = "https://media.architecturaldigest.com/photos/5f241de2c850b2a36b415024/master/w_1600%2Cc_limit/Luke-logo.png"
+        name="You",
+        url="https://media.architecturaldigest.com/photos/5f241de2c850b2a36b415024/master/w_1600%2Cc_limit/Luke-logo.png",
     ).send()
     cl.user_session.set(
         "message_history",
         [{"role": "system", "content": system_content}],
     )
 
+
 @cl.on_message
-async def main(message: str):
+async def on_message(message: cl.Message):
     message_history = cl.user_session.get("message_history")
-    message_history.append({"role": "user", "content": message})
+    message_history.append({"role": "user", "content": message.content})
+    logger.info("Question: [%s]", message.content)
 
     # Create the Chainlit response message
-    msg = cl.Message(content = "")
+    msg = cl.Message(content="")
 
-    # Retry the OpenAI API call if it fails
-    for attempt in range(max_retries):
-        try:
-            # Refresh the OpenAI security token if using Azure AD
-            if openai.api_type ==  "azure_ad":
-                refresh_openai_token()
+    async for stream_resp in await openai.chat.completions.create(
+        model=model,
+        messages=message_history,
+        temperature=temperature,
+        stream=True,
+    ):
+        if stream_resp and len(stream_resp.choices) > 0:
+            token = stream_resp.choices[0].delta.content or ""
+            await msg.stream_token(token)
 
-            # Send the message to OpenAI in an asynchronous mode and stream the response
-            async for stream_resp in await openai.ChatCompletion.acreate(
-                engine = engine,
-                model = model,
-                messages = message_history,
-                temperature = temperature,
-                stream = True
-            ):
-                if stream_resp and len(stream_resp.choices) > 0:
-                    token = stream_resp.choices[0]["delta"].get("content", "")
-                    await msg.stream_token(token)
-            break
-        except openai.error.Timeout:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API timeout occurred. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.APIError:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API error occurred. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.APIConnectionError:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API connection error occurred. Check your network settings, proxy configuration, SSL certificates, or firewall rules. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.InvalidRequestError:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API invalid request. Check the documentation for the specific API method you are calling and make sure you are sending valid and complete parameters. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.ServiceUnavailableError:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API service unavailable. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except Exception as e:
-            logger.exception(f"A non retriable error occurred. {e}")
-            break
+    if debug:
+        logger.info("Answer: [%s]", msg.content)
 
     message_history.append({"role": "assistant", "content": msg.content})
     await msg.send()
@@ -1376,9 +1316,21 @@ To see the text chunks that were used by the large language model to originate t
 
 ![Chainlit Source](images/chainlit-source.png)
 
-In the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought), below each message, you can find an `edit` button, as a pencil icon, if that message was generated by a prompt. Clicking on it opens the [Prompt Playground](https://docs.chainlit.io/concepts/prompt-playground) dialog which allows you to modify and iterate on the prompt as needed.
+In the [Chain of Thought](https://docs.chainlit.io/concepts/chain-of-thought), below the step used to invoke the OpenAI chat completion API, you can find an `Inspect in prompt playgroung` icon. Clicking on it opens the [Prompt Playground](https://docs.chainlit.io/concepts/prompt-playground) dialog which allows you to modify and iterate on the prompt as needed.
 
 ![Chainlit Prompt Playground](./images/chainlit-prompt-playground.png)
+
+As shown in the following picture, you can click and edit the value of the highlighted variables in the user prompt:
+
+![Chainlit Prompt Playground Variable](./images/chainlit-prompt-playground-variable.png)
+
+You can then click and edit the user question.
+
+![Chainlit Prompt Playground Question](./images/chainlit-prompt-playground-question.png)
+
+Then, you can click the `Submit` button to test the effect of your changes, as shown in the following picture.
+
+![Chainlit Prompt Playground Reply](./images/chainlit-prompt-playground-reply.png)
 
 Let's take a look at the individual parts of the application code. In the following section, the Python code starts by importing the necessary packages/modules.
 
@@ -1387,19 +1339,17 @@ Let's take a look at the individual parts of the application code. In the follow
 import os
 import io
 import sys
-import time
-import openai
-import random
 import logging
 import chainlit as cl
+from chainlit.playground.config import AzureChatOpenAI
 from pypdf import PdfReader
 from docx import Document
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from dotenv import load_dotenv
 from dotenv import dotenv_values
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings import AzureOpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
+from langchain.vectorstores.chroma import Chroma
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.chat_models import AzureChatOpenAI
 from langchain.prompts.chat import (
@@ -1407,10 +1357,6 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
-
-# These three lines swap the stdlib sqlite3 lib with the pysqlite3 package
-__import__('pysqlite3')
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 # Load environment variables from .env file
 if os.path.exists(".env"):
@@ -1424,10 +1370,10 @@ These are the libraries used by the chat application:
 2. `sys`: This module provides access to some variables used or maintained by the interpreter and functions that interact with the interpreter.
 3. `time`: This module provides various time-related functions for time manipulation and measurement.
 4. `openai`: the OpenAI Python library provides convenient access to the OpenAI API from applications written in the Python language. It includes a pre-defined set of classes for API resources that initialize themselves dynamically from API responses, which makes it compatible with a wide range of versions of the OpenAI API. You can find usage examples for the OpenAI Python library in our [API reference](https://beta.openai.com/docs/api-reference?lang=python) and the [OpenAI Cookbook](https://github.com/openai/openai-cookbook/).
-5. `random`: This module provides functions to generate random numbers.
-6. `logging`: This module provides flexible logging of messages.
-7. `chainlit as cl`: This imports the [Chainlit](https://docs.chainlit.io/overview) library and aliases it as `cl.` Chainlit is used to create the UI of the application.
-8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad`, a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Azure Active Directory using the credentials of the user-defined managed identity, whose client ID is defined in the `AZURE_CLIENT_ID` environment variable.
+5. `logging`: This module provides flexible logging of messages.
+6. `chainlit as cl`: This imports the [Chainlit](https://docs.chainlit.io/overview) library and aliases it as `cl.` Chainlit is used to create the UI of the application.
+7. `AzureChatOpenAI` from `chainlit.playground.config import`: you need to import `AzureChatOpenAI` from `chainlit.playground.config` to use the Chainlit Playground.
+8. `DefaultAzureCredential` from `azure.identity`: when the `openai_type` property value is `azure_ad`, a `DefaultAzureCredential` object from the [Azure Identity client library for Python - version 1.13.0](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python) is used to acquire security token from the Microsoft Entra ID using the credentials of the user-defined managed identity, whose client ID is defined in the `AZURE_CLIENT_ID` environment variable.
 9. `load_dotenv` and `dotenv_values` from `dotenv`: [Python-dotenv](https://github.com/theskumar/python-dotenv) reads key-value pairs from a `.env` file and can set them as environment variables. It helps in the development of applications following the [12-factor](http://12factor.net/) principles.
 10. `langchain`: Large language models (LLMs) are emerging as a transformative technology, enabling developers to build applications that they previously could not. However, using these LLMs in isolation is often insufficient for creating a truly powerful app - the real power comes when you can combine them with other sources of computation or knowledge. [LangChain](hhttps://pypi.org/project/langchain/) library aims to assist in the development of those types of applications.
 
@@ -1445,7 +1391,7 @@ temperature = float(os.environ.get("TEMPERATURE", 0.9))
 api_base = os.getenv("AZURE_OPENAI_BASE")
 api_key = os.getenv("AZURE_OPENAI_KEY")
 api_type = os.environ.get("AZURE_OPENAI_TYPE", "azure")
-api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-06-01-preview")
+api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-12-01-preview")
 chat_completion_deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 embeddings_deployment = os.getenv("AZURE_OPENAI_ADA_DEPLOYMENT")
 model = os.getenv("AZURE_OPENAI_MODEL")
@@ -1455,8 +1401,10 @@ text_splitter_chunk_size = int(os.getenv("TEXT_SPLITTER_CHUNK_SIZE", 1000))
 text_splitter_chunk_overlap = int(os.getenv("TEXT_SPLITTER_CHUNK_OVERLAP", 10))
 embeddings_chunk_size = int(os.getenv("EMBEDDINGS_CHUNK_SIZE", 16))
 max_retries = int(os.getenv("MAX_RETRIES", 5))
-backoff_in_seconds = float(os.getenv("BACKOFF_IN_SECONDS", 1))
-token_refresh_interval = int(os.getenv("TOKEN_REFRESH_INTERVAL", 1800))
+retry_min_seconds = int(os.getenv("RETRY_MIN_SECONDS", 1))
+retry_max_seconds = int(os.getenv("RETRY_MAX_SECONDS", 5))
+timeout = int(os.getenv("TIMEOUT", 30))
+debug = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
 # Configure system prompt
 system_template = """Use the following pieces of context to answer the users question.
@@ -1466,12 +1414,10 @@ The "SOURCES" part should be a reference to the source of the document from whic
 
 Example of your response should be:
 
----
-
+\`\`\`
 The answer is foo
 SOURCES: xyz
-
----
+\`\`\`
 
 Begin!
 ----------------
@@ -1483,18 +1429,33 @@ messages = [
 prompt = ChatPromptTemplate.from_messages(messages)
 chain_type_kwargs = {"prompt": prompt}
 
-# Configure OpenAI
-openai.api_type = api_type
-openai.api_version = api_version
-openai.api_base = api_base
-openai.api_key = api_key
+# Configure a logger
+logging.basicConfig(
+    stream=sys.stdout,
+    format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger(__name__)
+
+# Create Token Provider
+if api_type == "azure_ad":
+    token_provider = get_bearer_token_provider(
+        DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+    )
+
+# Setting the environment variables for the playground
+if api_type == "azure":
+    os.environ["AZURE_OPENAI_API_KEY"] = api_key
+os.environ["AZURE_OPENAI_API_VERSION"] = api_version
+os.environ["AZURE_OPENAI_ENDPOINT"] = api_base
+os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = chat_completion_deployment
 ```
 
 Here's a brief explanation of each variable and related environment variable:
 
 1. `temperature`: A float value representing the temperature for [Create chat completion](https://platform.openai.com/docs/api-reference/chat/create) method of the OpenAI API. It is fetched from the environment variables with a default value of 0.9.
 2. `api_base`: The base URL for the OpenAI API.
-3. `api_key`: The API key for the OpenAI API.
+3. `api_key`: The API key for the OpenAI API. The value of this variable can be null when using a user-assigned managed identity to acquire a security token to access Azure OpenAI.
 4. `api_type`: A string representing the type of the OpenAI API.
 5. `api_version`: A string representing the version of the OpenAI API.
 6. `chat_completion_deployment`: the name of the Azure OpenAI GPT model for chat completion.
@@ -1506,58 +1467,11 @@ Here's a brief explanation of each variable and related environment variable:
 12. `text_splitter_chunk_overlap`: the maximum chunk overlap used by the `RecursiveCharacterTextSplitter` object.
 13. `embeddings_chunk_size`: the maximum chunk size used by the `OpenAIEmbeddings` object.
 14. `max_retries`: The maximum number of retries for OpenAI API calls.
-15. `backoff_in_seconds`: The backoff time in seconds for retries in case of failures.
-16. `system_template`: The content of the system message used for OpenAI API calls.
-
-In the next section, the code sets the default Azure credential based on the `api_type` and configures a logger for logging purposes.
-
-```python
-# Set default Azure credential
-default_credential = DefaultAzureCredential() if openai.api_type == "azure_ad" else None
-
-# Configure a logger
-logging.basicConfig(
-    stream=sys.stdout,
-    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-```
-
-Here's a brief explanation:
-
-1. `default_credential`: It sets the default Azure credential to `DefaultAzureCredential()` if the `api_type` is "azure_ad"; otherwise, it is set to `None`.
-2. `logging.basicConfig()`: This function configures the logging system with specific settings.
-
-    - `stream`: The output stream where log messages will be written. Here, it is set to `sys.stdout` for writing log messages to the standard output.
-    - `format`: The format string for log messages. It includes the timestamp, filename, line number, log level, and the actual log message.
-    - `level`: The logging level. It is set to `logging.INFO`, meaning only messages with the level `INFO` and above will be logged.
-  
-3. `logger`: This creates a logger instance named after the current module (`__name__`). The logger will be used to log messages throughout the code.
-
-Next, the code defines a helper function `backoff` that takes an integer `attempt` and returns a float value representing the backoff time for exponential retries in case of API call failures.
-
-```python
-def backoff(attempt: int) -> float:
-    return backoff_in_seconds * 2 ** attempt + random.uniform(0, 1)
-```
-
-The backoff time is calculated using the `backoff_in_seconds` and `attempt` variables. It follows the formula `backoff_in_seconds * 2 ** attempt + random.uniform(0, 1)`. This formula increases the backoff time exponentially with each attempt and adds a random value between 0 and 1 to avoid synchronized retries.
-
-Then the application defines a function called `refresh_openai_token()` to refresh the OpenAI security token if needed.
-
-```python
-def refresh_openai_token():
-    token = cl.user_session.get('openai_token')
-    if token is None or token.expires_on < int(time.time()) - token_refresh_interval:
-        cl.user_session.set('openai_token', default_credential.get_token("https://cognitiveservices.azure.com/.default"))
-        openai.api_key = cl.user_session.get('openai_token').token
-```
-
-The function follows these steps:
-
-1. It fetches the current token from `cl.user_session` (which seems to be a part of the `chainlit` library) using the key `'openai_token'`. The [user_session](https://docs.chainlit.io/concepts/user-session) is a dictionary that stores the user’s session data. The id and env keys are reserved for the session ID and environment variables, respectively. Other keys can be used to store arbitrary data in the user’s session.
-2. It checks if the token is `None` or if its expiration time (`expires_on`) is less than the current time minus 1800 seconds (30 minutes).
+15. `retry_min_seconds`: the minimum number of seconds before a retry.
+16. `retry_max_seconds`: the maximum number of seconds before a retry.
+17. `timeout`: The timeout in seconds.
+18. `system_template`: The content of the system message used for OpenAI API calls.
+19. `debug`: When debug is equal to `true`, `t`, or `1`, the logger switches to verbose mode.
 
 Next, the code defines a function called `start_chat` that is used to initialize the when the user connects to the application or clicks the `New Chat` button.
 
@@ -1574,7 +1488,7 @@ async def start_chat():
         url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
     ).send()
     await cl.Avatar(
-        name="User",
+        name="You",
         url="https://media.architecturaldigest.com/photos/5f241de2c850b2a36b415024/master/w_1600%2Cc_limit/Luke-logo.png"
     ).send()
 ```
@@ -1591,14 +1505,17 @@ The following code is used to initialize the large language model (LLM) chain us
     files = None
 
     # Wait for the user to upload a file
-    while files is None:
+    while files == None:
         files = await cl.AskFileMessage(
             content=f"Please upload up to {max_files} `.pdf` or `.docx` files to begin.",
-            accept=["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+            accept=[
+                "application/pdf",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ],
             max_size_mb=max_size_mb,
             max_files=max_files,
             timeout=86400,
-            raise_on_timeout=False
+            raise_on_timeout=False,
         ).send()
 ```
 
@@ -1610,61 +1527,72 @@ The following code processes each uploaded file by extracting its content.
 2. This code performs text processing and chunking. It checks the file extension to read the file content accordingly, depending on if it's a `.pdf` or a `.docx` document. 
 3. The text content is split into smaller chunks using the [RecursiveCharacterTextSplitter](https://api.python.langchain.com/en/latest/text_splitter/langchain.text_splitter.RecursiveCharacterTextSplitter.html?highlight=recursivecharactertextsplitter#langchain.text_splitter.RecursiveCharacterTextSplitter) LangChain object.
 4. Metadata is created for each chunk and stored in the `metadatas` list.
-5. If `openai.api_type == "azure_ad"`, the code invokes the `refresh_openai_token()` that gets a security token from Azure AD to communicate with the Azure OpenAI Service.
 
 ```python
     # Create a message to inform the user that the files are being processed
-    content = ''
-    if (len(files)  ==  1):
+    content = ""
+    if len(files) == 1:
         content = f"Processing `{files[0].name}`..."
     else:
         files_names = [f"`{f.name}`" for f in files]
         content = f"Processing {', '.join(files_names)}..."
-    msg = cl.Message(content = content, author = "Chatbot")
+    logger.info(content)
+    msg = cl.Message(content=content, author="Chatbot")
     await msg.send()
 
     # Create a list to store the texts of each file
     all_texts = []
 
-    # Process each file uploaded by the user
+    # Process each file uplodaded by the user
     for file in files:
+        # Read file contents
+        with open(file.path, "rb") as uploaded_file:
+            file_contents = uploaded_file.read()
+
+        logger.info("[%d] bytes were read from %s", len(file_contents), file.path)
 
         # Create an in-memory buffer from the file content
-        bytes = io.BytesIO(file.content)
+        bytes = io.BytesIO(file_contents)
 
         # Get file extension
-        extension = file.name.split('.')[-1]
+        extension = file.name.split(".")[-1]
 
         # Initialize the text variable
-        text = ''
+        text = ""
 
         # Read the file
         if extension == "pdf":
-            # ...
+            reader = PdfReader(bytes)
+            for i in range(len(reader.pages)):
+                text += reader.pages[i].extract_text()
+                if debug:
+                    logger.info("[%s] read from %s", text, file.path)
         elif extension == "docx":
-            # ...
-        
+            doc = Document(bytes)
+            paragraph_list = []
+            for paragraph in doc.paragraphs:
+                paragraph_list.append(paragraph.text)
+                if debug:
+                    logger.info("[%s] read from %s", paragraph.text, file.path)
+            text = "\n".join(paragraph_list)
+
         # Split the text into chunks
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=text_splitter_chunk_size,
-            chunk_overlap=text_splitter_chunk_overlap
+            chunk_overlap=text_splitter_chunk_overlap,
         )
         texts = text_splitter.split_text(text)
 
         # Add the chunks and metadata to the list
         all_texts.extend(texts)
-    
+
     # Create a metadata for each chunk
     metadatas = [{"source": f"{i}-pl"} for i in range(len(all_texts))]
-
-    #  Refresh the OpenAI security token if using Azure AD
-    if openai.api_type == "azure_ad":
-        refresh_openai_token()
 ```
 
 The next piece of code performs the following steps:
 
-1. It creates an [OpenAIEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.openai.OpenAIEmbeddings.html#langchain.embeddings.openai.OpenAIEmbeddings) configured to use the embeddings model in the Azure OpenAI Service to create embeddings from text chunks.
+1. It creates an [AzureOpenAIEmbeddings](https://python.langchain.com/docs/integrations/text_embedding/azureopenai) configured to use the embeddings model in the Azure OpenAI Service to create embeddings from text chunks.
 2. It creates a [ChromaDB](https://docs.trychroma.com/) vector database using the `OpenAIEmbeddings` object, the text chunks list, and the metadata list.
 3. It creates an [AzureChatOpenAI](https://api.python.langchain.com/en/latest/chat_models/langchain.chat_models.azure_openai.AzureChatOpenAI.html?highlight=azurechatopenai#langchain.chat_models.azure_openai.AzureChatOpenAI) LangChain object based on the GPR model hosted in Azure OpenAI Service. 
 4. It creates a chain using the [RetrievalQAWithSourcesChain.from_chain_type](https://api.python.langchain.com/en/latest/chains/langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.html?highlight=retrievalqawithsourceschain%20from_chain_type#langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.from_chain_type) API call uses previously created models and stores them as retrievers.
@@ -1673,40 +1601,73 @@ The next piece of code performs the following steps:
 7. The `cl.user_session.set("chain", chain)` call stores the LLM chain in the [user_session](https://docs.chainlit.io/concepts/user-session) dictionary for later use.
 
 ```python
-    #  Refresh the OpenAI security token if using Azure AD
-    if openai.api_type  ==  "azure_ad":
-        refresh_openai_token()
-
     # Create a Chroma vector store
-    embeddings = OpenAIEmbeddings(
-        deployment = embeddings_deployment,
-        openai_api_key = openai.api_key,
-        openai_api_base = openai.api_base,
-        openai_api_version = openai.api_version,
-        openai_api_type = openai.api_type,
-        chunk_size = embeddings_chunk_size)
+    if api_type == "azure":
+        embeddings = AzureOpenAIEmbeddings(
+            openai_api_version=api_version,
+            openai_api_type=api_type,
+            openai_api_key=api_key,
+            azure_endpoint=api_base,
+            azure_deployment=embeddings_deployment,
+            max_retries=max_retries,
+            retry_min_seconds=retry_min_seconds,
+            retry_max_seconds=retry_max_seconds,
+            chunk_size=embeddings_chunk_size,
+            timeout=timeout,
+        )
+    else:
+        embeddings = AzureOpenAIEmbeddings(
+            openai_api_version=api_version,
+            openai_api_type=api_type,
+            azure_endpoint=api_base,
+            azure_ad_token_provider=token_provider,
+            azure_deployment=embeddings_deployment,
+            max_retries=max_retries,
+            retry_min_seconds=retry_min_seconds,
+            retry_max_seconds=retry_max_seconds,
+            chunk_size=embeddings_chunk_size,
+            timeout=timeout,
+        )
 
     # Create a Chroma vector store
     db = await cl.make_async(Chroma.from_texts)(
-        all_texts, embeddings, metadatas = metadatas
+        all_texts, embeddings, metadatas=metadatas
     )
 
     # Create an AzureChatOpenAI llm
-    llm = AzureChatOpenAI(
-        temperature = temperature,
-        openai_api_key = openai.api_key,
-        openai_api_base = openai.api_base,
-        openai_api_version = openai.api_version,
-        openai_api_type = openai.api_type,
-        deployment_name = chat_completion_deployment)
+    if api_type == "azure":
+        llm = AzureChatOpenAI(
+            openai_api_type=api_type,
+            openai_api_version=api_version,
+            openai_api_key=api_key,
+            azure_endpoint=api_base,
+            temperature=temperature,
+            azure_deployment=chat_completion_deployment,
+            streaming=True,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+    else:
+        llm = AzureChatOpenAI(
+            openai_api_type=api_type,
+            openai_api_version=api_version,
+            azure_endpoint=api_base,
+            api_key=api_key,
+            temperature=temperature,
+            azure_deployment=chat_completion_deployment,
+            azure_ad_token_provider=token_provider,
+            streaming=True,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
 
     # Create a chain that uses the Chroma vector store
     chain = RetrievalQAWithSourcesChain.from_chain_type(
-        llm = llm,
-        chain_type = "stuff",
-        retriever = db.as_retriever(),
-        return_source_documents = True,
-        chain_type_kwargs = chain_type_kwargs
+        llm=llm,
+        chain_type="stuff",
+        retriever=db.as_retriever(),
+        return_source_documents=True,
+        chain_type_kwargs=chain_type_kwargs,
     )
 
     # Save the metadata and texts in the user session
@@ -1714,12 +1675,14 @@ The next piece of code performs the following steps:
     cl.user_session.set("texts", all_texts)
 
     # Create a message to inform the user that the files are ready for queries
-    content = ''
-    if (len(files)  ==  1):
+    content = ""
+    if len(files) == 1:
         content = f"`{files[0].name}` processed. You can now ask questions!"
+        logger.info(content)
     else:
         files_names = [f"`{f.name}`" for f in files]
         content = f"{', '.join(files_names)} processed. You can now ask questions."
+        logger.info(content)
     msg.content = content
     msg.author = "Chatbot"
     await msg.update()
@@ -1732,75 +1695,38 @@ The following code handles the communication with the OpenAI API and incorporate
 
 - `@cl.on_message`: The [on_message](https://docs.chainlit.io/api-reference/on-message) decorator registers a callback function `main(message: str)` to be called when the user submits a new message in the chat. It is the main function responsible for handling the chat logic.
 - `cl.user_session.get("chain")`: this call retrieves the LLM chain from the [user_session](https://docs.chainlit.io/concepts/user-session) dictionary.
-- The `for` loop allows multiple attempts, up to `max_retries`, to communicate with the chat completion API and handles different types of API errors, such as timeout, connection error, invalid request, and service unavailability. 
+- `cl.AsyncLangchainCallbackHandler`: this call creates a LangChain callback handler.
 - `await chain.acall`: The asynchronous call to the [RetrievalQAWithSourcesChain.acall](https://api.python.langchain.com/en/latest/chains/langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.html?highlight=retrievalqawithsourceschain%20acall#langchain.chains.qa_with_sources.retrieval.RetrievalQAWithSourcesChain.acall) executes the LLM chain with the user message as an input.
 
 ```python
 @cl.on_message
-async def run(message: str):
+async def main(message: cl.Message):
     # Retrieve the chain from the user session
     chain = cl.user_session.get("chain")
 
-    # Initialize the response
-    response =  None
+    # Create a callback handler
+    cb = cl.AsyncLangchainCallbackHandler()
 
-    # Retry the OpenAI API call if it fails
-    for attempt in range(max_retries):
-        try:
-            # Refresh the OpenAI security token if using Azure AD
-            if openai.api_type == "azure_ad":
-                refresh_openai_token()
-
-            # Ask the question to the chain
-            response = await chain.acall(message, callbacks=[cl.AsyncLangchainCallbackHandler()])
-            break
-        except openai.error.Timeout:
-            # Exception handling for timeout error
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API timeout occurred. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.APIError:
-            # Exception handling for API error
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API error occurred. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.APIConnectionError:
-            # Exception handling for API connection error
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API connection error occurred. Check your network settings, proxy configuration, SSL certificates, or firewall rules. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.InvalidRequestError:
-            # Exception handling for invalid request error
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API invalid request. Check the documentation for the specific API method you are calling and make sure you are sending valid and complete parameters. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.ServiceUnavailableError:
-            # Exception handling for service unavailable error
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API service unavailable. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except Exception as e:
-            # Exception handling for non-retriable errors
-            logger.exception(f"A non-retriable error occurred. {e}")
-            break
+    # Get the response from the chain
+    response = await chain.acall(message.content, callbacks=[cb])
+    logger.info("Question: [%s]", message.content)
 ```
 
 The code below extracts the answers and sources from the API response and formats them to be sent as a message.
 
 - The `answer` and `sources` are obtained from the `response` dictionary.
-- The sources are then processed to find corresponding texts in the user session metadata (`metadatas`) and create `source_elements` using `cl.Text()`. 
+- The sources are then processed to find corresponding texts in the user session metadata (`metadatas`) and create `source_elements` using `cl.Text()`.
 - `cl.Message().send()`: the [Message](https://docs.chainlit.io/api-reference/message#update-a-message) API creates and displays a message containing the answer and sources, if available.
+- The last command sets the `AZURE_OPENAI_API_KEY` environment variable to a security key to access Azure OpenAI returned by the token provider. This key is used by the Chainlit playground.
 
 ```python
     # Get the answer and sources from the response
     answer = response["answer"]
     sources = response["sources"].strip()
     source_elements = []
+
+    if debug:
+        logger.info("Answer: [%s]", answer)
 
     # Get the metadata and texts from the user session
     metadatas = cl.user_session.get("metadatas")
@@ -1829,6 +1755,10 @@ The code below extracts the answers and sources from the API response and format
             answer += "\nNo sources found"
 
     await cl.Message(content=answer, elements=source_elements).send()
+
+    # Setting the AZURE_OPENAI_API_KEY environment variable for the playground
+    if api_type == "azure_ad":
+        os.environ["AZURE_OPENAI_API_KEY"] = token_provider()
 ```
 
 Below, you can read the complete code of the application.
@@ -1838,19 +1768,17 @@ Below, you can read the complete code of the application.
 import os
 import io
 import sys
-import time
-import openai
-import random
 import logging
 import chainlit as cl
+from chainlit.playground.config import AzureChatOpenAI
 from pypdf import PdfReader
 from docx import Document
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from dotenv import load_dotenv
 from dotenv import dotenv_values
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings import AzureOpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
+from langchain.vectorstores.chroma import Chroma
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.chat_models import AzureChatOpenAI
 from langchain.prompts.chat import (
@@ -1859,13 +1787,9 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 
-# These three lines swap the stdlib sqlite3 lib with the pysqlite3 package
-__import__('pysqlite3')
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-
 # Load environment variables from .env file
 if os.path.exists(".env"):
-    load_dotenv(override = True)
+    load_dotenv(override=True)
     config = dotenv_values(".env")
 
 # Read environment variables
@@ -1873,17 +1797,21 @@ temperature = float(os.environ.get("TEMPERATURE", 0.9))
 api_base = os.getenv("AZURE_OPENAI_BASE")
 api_key = os.getenv("AZURE_OPENAI_KEY")
 api_type = os.environ.get("AZURE_OPENAI_TYPE", "azure")
-api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-06-01-preview")
+api_version = os.environ.get("AZURE_OPENAI_VERSION", "2023-12-01-preview")
 chat_completion_deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 embeddings_deployment = os.getenv("AZURE_OPENAI_ADA_DEPLOYMENT")
 model = os.getenv("AZURE_OPENAI_MODEL")
 max_size_mb = int(os.getenv("CHAINLIT_MAX_SIZE_MB", 100))
 max_files = int(os.getenv("CHAINLIT_MAX_FILES", 10))
+max_files = int(os.getenv("CHAINLIT_MAX_FILES", 10))
 text_splitter_chunk_size = int(os.getenv("TEXT_SPLITTER_CHUNK_SIZE", 1000))
 text_splitter_chunk_overlap = int(os.getenv("TEXT_SPLITTER_CHUNK_OVERLAP", 10))
 embeddings_chunk_size = int(os.getenv("EMBEDDINGS_CHUNK_SIZE", 16))
 max_retries = int(os.getenv("MAX_RETRIES", 5))
-backoff_in_seconds = float(os.getenv("BACKOFF_IN_SECONDS", 1))
+retry_min_seconds = int(os.getenv("RETRY_MIN_SECONDS", 1))
+retry_max_seconds = int(os.getenv("RETRY_MAX_SECONDS", 5))
+timeout = int(os.getenv("TIMEOUT", 30))
+debug = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
 # Configure system prompt
 system_template = """Use the following pieces of context to answer the users question.
@@ -1893,12 +1821,10 @@ The "SOURCES" part should be a reference to the source of the document from whic
 
 Example of your response should be:
 
----
-
+\`\`\`
 The answer is foo
 SOURCES: xyz
-
----
+\`\`\`
 
 Begin!
 ----------------
@@ -1910,71 +1836,67 @@ messages = [
 prompt = ChatPromptTemplate.from_messages(messages)
 chain_type_kwargs = {"prompt": prompt}
 
-# Configure OpenAI
-openai.api_type = api_type
-openai.api_version = api_version
-openai.api_base = api_base
-openai.api_key = api_key
-
-# Set default Azure credential
-default_credential = DefaultAzureCredential(
-) if openai.api_type  ==  "azure_ad" else None
-
 # Configure a logger
-logging.basicConfig(stream = sys.stdout,
-                    format = '[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
-                    level = logging.INFO)
+logging.basicConfig(
+    stream=sys.stdout,
+    format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger(__name__)
 
-# Refresh the OpenAI security token every 45 minutes
-def refresh_openai_token():
-    token = cl.user_session.get('openai_token')
-    if token  ==  None or token.expires_on < int(time.time()) - 1800:
-        cl.user_session.set('openai_token', default_credential.get_token(
-            "https://cognitiveservices.azure.com/.default"))
-        openai.api_key = cl.user_session.get('openai_token').token
+# Create Token Provider
+if api_type == "azure_ad":
+    token_provider = get_bearer_token_provider(
+        DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+    )
 
-def backoff(attempt : int) -> float:
-    return backoff_in_seconds * 2**attempt + random.uniform(0, 1)
+# Setting the environment variables for the playground
+if api_type == "azure":
+    os.environ["AZURE_OPENAI_API_KEY"] = api_key
+os.environ["AZURE_OPENAI_API_VERSION"] = api_version
+os.environ["AZURE_OPENAI_ENDPOINT"] = api_base
+os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = chat_completion_deployment
+
 
 @cl.on_chat_start
 async def start():
     await cl.Avatar(
-        name = "Chatbot",
-        url = "https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
+        name="Chatbot", url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
     ).send()
     await cl.Avatar(
-        name = "Error",
-        url = "https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
+        name="Error", url="https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
     ).send()
     await cl.Avatar(
-        name = "User",
-        url = "https://media.architecturaldigest.com/photos/5f241de2c850b2a36b415024/master/w_1600%2Cc_limit/Luke-logo.png"
+        name="You",
+        url="https://media.architecturaldigest.com/photos/5f241de2c850b2a36b415024/master/w_1600%2Cc_limit/Luke-logo.png",
     ).send()
 
     # Initialize the file list to None
     files = None
 
     # Wait for the user to upload a file
-    while files  ==  None:
+    while files == None:
         files = await cl.AskFileMessage(
-            content = f"Please upload up to {max_files} `.pdf` or `.docx` files to begin.",
-            accept = ["application/pdf",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-            max_size_mb = max_size_mb,
-            max_files = max_files,
-            timeout = 86400,
-            raise_on_timeout = False
+            content=f"Please upload up to {max_files} `.pdf` or `.docx` files to begin.",
+            accept=[
+                "application/pdf",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ],
+            max_size_mb=max_size_mb,
+            max_files=max_files,
+            timeout=86400,
+            raise_on_timeout=False,
         ).send()
 
     # Create a message to inform the user that the files are being processed
-    content = ''
-    if (len(files)  ==  1):
+    content = ""
+    if len(files) == 1:
         content = f"Processing `{files[0].name}`..."
     else:
         files_names = [f"`{f.name}`" for f in files]
         content = f"Processing {', '.join(files_names)}..."
-    msg = cl.Message(content = content, author = "Chatbot")
+    logger.info(content)
+    msg = cl.Message(content=content, author="Chatbot")
     await msg.send()
 
     # Create a list to store the texts of each file
@@ -1982,32 +1904,42 @@ async def start():
 
     # Process each file uplodaded by the user
     for file in files:
+        # Read file contents
+        with open(file.path, "rb") as uploaded_file:
+            file_contents = uploaded_file.read()
+
+        logger.info("[%d] bytes were read from %s", len(file_contents), file.path)
 
         # Create an in-memory buffer from the file content
-        bytes = io.BytesIO(file.content)
+        bytes = io.BytesIO(file_contents)
 
         # Get file extension
-        extension = file.name.split('.')[-1]
+        extension = file.name.split(".")[-1]
 
         # Initialize the text variable
-        text = ''
+        text = ""
 
         # Read the file
-        if extension  ==  "pdf":
+        if extension == "pdf":
             reader = PdfReader(bytes)
             for i in range(len(reader.pages)):
-                text +=  reader.pages[i].extract_text()
-        elif extension  ==  "docx":
+                text += reader.pages[i].extract_text()
+                if debug:
+                    logger.info("[%s] read from %s", text, file.path)
+        elif extension == "docx":
             doc = Document(bytes)
             paragraph_list = []
             for paragraph in doc.paragraphs:
                 paragraph_list.append(paragraph.text)
-            text = '\n'.join(paragraph_list)
+                if debug:
+                    logger.info("[%s] read from %s", paragraph.text, file.path)
+            text = "\n".join(paragraph_list)
 
         # Split the text into chunks
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size = text_splitter_chunk_size,
-            chunk_overlap = text_splitter_chunk_overlap)
+            chunk_size=text_splitter_chunk_size,
+            chunk_overlap=text_splitter_chunk_overlap,
+        )
         texts = text_splitter.split_text(text)
 
         # Add the chunks and metadata to the list
@@ -2016,40 +1948,73 @@ async def start():
     # Create a metadata for each chunk
     metadatas = [{"source": f"{i}-pl"} for i in range(len(all_texts))]
 
-    #  Refresh the OpenAI security token if using Azure AD
-    if openai.api_type  ==  "azure_ad":
-        refresh_openai_token()
-
     # Create a Chroma vector store
-    embeddings = OpenAIEmbeddings(
-        deployment = embeddings_deployment,
-        openai_api_key = openai.api_key,
-        openai_api_base = openai.api_base,
-        openai_api_version = openai.api_version,
-        openai_api_type = openai.api_type,
-        chunk_size = embeddings_chunk_size)
+    if api_type == "azure":
+        embeddings = AzureOpenAIEmbeddings(
+            openai_api_version=api_version,
+            openai_api_type=api_type,
+            openai_api_key=api_key,
+            azure_endpoint=api_base,
+            azure_deployment=embeddings_deployment,
+            max_retries=max_retries,
+            retry_min_seconds=retry_min_seconds,
+            retry_max_seconds=retry_max_seconds,
+            chunk_size=embeddings_chunk_size,
+            timeout=timeout,
+        )
+    else:
+        embeddings = AzureOpenAIEmbeddings(
+            openai_api_version=api_version,
+            openai_api_type=api_type,
+            azure_endpoint=api_base,
+            azure_ad_token_provider=token_provider,
+            azure_deployment=embeddings_deployment,
+            max_retries=max_retries,
+            retry_min_seconds=retry_min_seconds,
+            retry_max_seconds=retry_max_seconds,
+            chunk_size=embeddings_chunk_size,
+            timeout=timeout,
+        )
 
     # Create a Chroma vector store
     db = await cl.make_async(Chroma.from_texts)(
-        all_texts, embeddings, metadatas = metadatas
+        all_texts, embeddings, metadatas=metadatas
     )
 
     # Create an AzureChatOpenAI llm
-    llm = AzureChatOpenAI(
-        temperature = temperature,
-        openai_api_key = openai.api_key,
-        openai_api_base = openai.api_base,
-        openai_api_version = openai.api_version,
-        openai_api_type = openai.api_type,
-        deployment_name = chat_completion_deployment)
+    if api_type == "azure":
+        llm = AzureChatOpenAI(
+            openai_api_type=api_type,
+            openai_api_version=api_version,
+            openai_api_key=api_key,
+            azure_endpoint=api_base,
+            temperature=temperature,
+            azure_deployment=chat_completion_deployment,
+            streaming=True,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+    else:
+        llm = AzureChatOpenAI(
+            openai_api_type=api_type,
+            openai_api_version=api_version,
+            azure_endpoint=api_base,
+            api_key=api_key,
+            temperature=temperature,
+            azure_deployment=chat_completion_deployment,
+            azure_ad_token_provider=token_provider,
+            streaming=True,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
 
     # Create a chain that uses the Chroma vector store
     chain = RetrievalQAWithSourcesChain.from_chain_type(
-        llm = llm,
-        chain_type = "stuff",
-        retriever = db.as_retriever(),
-        return_source_documents = True,
-        chain_type_kwargs = chain_type_kwargs
+        llm=llm,
+        chain_type="stuff",
+        retriever=db.as_retriever(),
+        return_source_documents=True,
+        chain_type_kwargs=chain_type_kwargs,
     )
 
     # Save the metadata and texts in the user session
@@ -2057,70 +2022,41 @@ async def start():
     cl.user_session.set("texts", all_texts)
 
     # Create a message to inform the user that the files are ready for queries
-    content = ''
-    if (len(files)  ==  1):
+    content = ""
+    if len(files) == 1:
         content = f"`{files[0].name}` processed. You can now ask questions!"
+        logger.info(content)
     else:
         files_names = [f"`{f.name}`" for f in files]
         content = f"{', '.join(files_names)} processed. You can now ask questions."
+        logger.info(content)
     msg.content = content
     msg.author = "Chatbot"
     await msg.update()
 
-     # Store the chain in the user session
+    # Store the chain in the user session
     cl.user_session.set("chain", chain)
 
+
 @cl.on_message
-async def run(message: str):
+async def main(message: cl.Message):
     # Retrieve the chain from the user session
     chain = cl.user_session.get("chain")
-    
-    # Initialize the response
-    response =  None
 
-    # Retry the OpenAI API call if it fails
-    for attempt in range(max_retries):
-        try:
-            # Refresh the OpenAI security token if using Azure AD
-            if openai.api_type  ==  "azure_ad":
-                refresh_openai_token()
+    # Create a callback handler
+    cb = cl.AsyncLangchainCallbackHandler()
 
-            # Ask the question to the chain
-            response = await chain.acall(message, callbacks = [cl.AsyncLangchainCallbackHandler()])
-            break
-        except openai.error.Timeout:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API timeout occurred. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.APIError:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API error occurred. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.APIConnectionError:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API connection error occurred. Check your network settings, proxy configuration, SSL certificates, or firewall rules. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.InvalidRequestError:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API invalid request. Check the documentation for the specific API method you are calling and make sure you are sending valid and complete parameters. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except openai.error.ServiceUnavailableError:
-            # Implement exponential backoff
-            wait_time = backoff(attempt)
-            logger.exception(f"OpenAI API service unavailable. Waiting {wait_time} seconds and trying again.")
-            time.sleep(wait_time)
-        except Exception as e:
-            logger.exception(f"A non retriable error occurred. {e}")
-            break
+    # Get the response from the chain
+    response = await chain.acall(message.content, callbacks=[cb])
+    logger.info("Question: [%s]", message.content)
 
     # Get the answer and sources from the response
     answer = response["answer"]
     sources = response["sources"].strip()
     source_elements = []
+
+    if debug:
+        logger.info("Answer: [%s]", answer)
 
     # Get the metadata and texts from the user session
     metadatas = cl.user_session.get("metadatas")
@@ -2141,14 +2077,18 @@ async def run(message: str):
             text = texts[index]
             found_sources.append(source_name)
             # Create the text element referenced in the message
-            source_elements.append(cl.Text(content = text, name = source_name))
+            source_elements.append(cl.Text(content=text, name=source_name))
 
         if found_sources:
-            answer +=  f"\nSources: {', '.join(found_sources)}"
+            answer += f"\nSources: {', '.join(found_sources)}"
         else:
-            answer +=  "\nNo sources found"
+            answer += "\nNo sources found"
 
-    await cl.Message(content = answer, elements = source_elements).send()
+    await cl.Message(content=answer, elements=source_elements).send()
+
+    # Setting the AZURE_OPENAI_API_KEY environment variable for the playground
+    if api_type == "azure_ad":
+        os.environ["AZURE_OPENAI_API_KEY"] = token_provider()
  ```
 
 You can run the application locally using the following command. The `-w` flag` indicates auto-reload whenever we make changes live in our application code.

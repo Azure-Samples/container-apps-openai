@@ -426,6 +426,39 @@ resource "azurerm_role_assignment" "acr_pull_assignment" {
 }
 ```
 
+## Build Docker Images
+
+After deploying the infrastructure, it's essential to build and push Docker images to the Azure Container Registry (ACR). This ensures that the container apps which are deployed by the Terraform applicaton module have the necessary images available in ACR for deployment. 
+
+Before you begin using any scripts in the src folder, first customize the variables in the the `00-variables.sh` file. This file, found in the same folder, sets up variables used by all subsequent scripts, including:
+
+```bash
+# Variables
+
+# Azure Container Registry
+prefix="Blue"
+acrName="${prefix}Registry"
+acrResourceGrougName="${prefix}RG"
+location="EastUS"
+
+# Python Files
+docAppFile="doc.py"
+chatAppFile="chat.py"
+
+# Docker Images
+docImageName="doc"
+chatImageName="chat"
+tag="v1"
+port="8000"
+
+# Arrays
+images=($docImageName $chatImageName)
+filenames=($docAppFile $chatAppFile)
+```
+
+After customizing the variables, start the Docker image building process with the `src/01-build-docker-images.sh` Bash script. This script automatically creates the Docker container image for both applications. Then, use the `src/03-push-docker-image.sh` script to upload your images to the Azure Container Registry.
+
+
 ## Deploy the Applications
 
 Before deploying the Terraform modules in the `terraform/apps` folder, specify a value for the following variables in the [terraform.tfvars](https://developer.hashicorp.com/terraform/language/values/variables#variable-definitions-tfvars-files) variable definitions file.

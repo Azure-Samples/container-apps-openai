@@ -8,7 +8,7 @@ IF SUFFICIENT INFORMATION IS NOT PROVIDED VIA THE FOLLOWING TEMPLATE THE ISSUE M
 ```
 - [ ] bug report -> please search issues before submitting
 - [ ] feature request
-- [ ] documentation issue or request
+- [x] documentation issue or request
 - [ ] regression (a behavior that used to work and stopped in a new release)
 ```
 
@@ -28,6 +28,6 @@ IF SUFFICIENT INFORMATION IS NOT PROVIDED VIA THE FOLLOWING TEMPLATE THE ISSUE M
 >
 
 ### Mention any other details that might be useful
-
+Adding steps to help the flow of the deployment. 
 > ---------------------------------------------------------------
 > Thanks! We'll be in touch soon.
